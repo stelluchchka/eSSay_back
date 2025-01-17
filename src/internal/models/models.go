@@ -16,6 +16,7 @@ type Essay struct {
 	EssayText   string    `json:"essay_text"`
 	CompletedAt time.Time `json:"completed_at"`
 	Status      string    `json:"status"`
+	IsPublished bool      `json:"is_published"`
 	UserID      uint8     `json:"user_id"`
 	VariantID   uint8     `json:"variant_id"`
 }

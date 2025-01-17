@@ -1,10 +1,10 @@
-CREATE TYPE STATUS AS ENUM ('draft', 'checked', 'appeal', 'published');
+CREATE TYPE STATUS AS ENUM ('draft', 'saved', 'checked', 'appeal');
 
 CREATE TABLE "user" (
     id SERIAL PRIMARY KEY,
-    mail VARCHAR(30) NOT NULL UNIQUE,
-    nickname VARCHAR(30) NOT NULL,
-    password VARCHAR(30) NOT NULL,
+    mail VARCHAR(100) NOT NULL UNIQUE,
+    nickname VARCHAR(100) NOT NULL,
+    password VARCHAR(250) NOT NULL,
     is_moderator BOOLEAN DEFAULT FALSE,
     count_checks INTEGER DEFAULT 2
 );
@@ -20,6 +20,7 @@ CREATE TABLE essay (
     essay_text TEXT,
     completed_at TIMESTAMP,
     status STATUS,
+    is_published BOOLEAN DEFAULT FALSE,
     user_id INTEGER,
     variant_id INTEGER,
     FOREIGN KEY (user_id) REFERENCES "user"(id),
@@ -30,7 +31,7 @@ CREATE TABLE comment (
     user_id INTEGER,
     essay_id INTEGER,
     comment_text TEXT,
-    comment_datetime TIMESTAMP,
+    comment_datetime TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY (user_id, essay_id),
     FOREIGN KEY (user_id) REFERENCES "user"(id),
     FOREIGN KEY (essay_id) REFERENCES essay(id)
