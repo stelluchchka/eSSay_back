@@ -23,7 +23,7 @@ func NewEssayService() *EssayService {
 
 // GetPublishedEssays retrieves all published essays.
 func (s *EssayService) GetPublishedEssays() ([]models.Essay, error) {
-	query := `SELECT id, essay_text, completed_at, status, is_published, user_id, variant_id FROM essay WHERE is_published = true`
+	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE is_published = true`
 	rows, err := s.DB.Query(query)
 	if err != nil {
 		log.Println("Error fetching published essays:", err)
@@ -46,7 +46,7 @@ func (s *EssayService) GetPublishedEssays() ([]models.Essay, error) {
 
 // GetEssayByID retrieves a published essay by its ID.
 func (s *EssayService) GetEssayByID(id uint8) (*models.Essay, error) {
-	query := `SELECT id, essay_text, completed_at, status, is_published, user_id, variant_id FROM essay WHERE id = $1`
+	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE id = $1`
 	row := s.DB.QueryRow(query, id)
 
 	var essay models.Essay
@@ -63,7 +63,7 @@ func (s *EssayService) GetEssayByID(id uint8) (*models.Essay, error) {
 
 // GetPublishedEssayByID retrieves a published essay by its ID.
 func (s *EssayService) GetPublishedEssayByID(id uint8) (*models.Essay, error) {
-	query := `SELECT id, essay_text, completed_at, status, is_published, user_id, variant_id FROM essay WHERE id = $1 AND is_published = true`
+	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE id = $1 AND is_published = true`
 	row := s.DB.QueryRow(query, id)
 
 	var essay models.Essay
@@ -80,7 +80,7 @@ func (s *EssayService) GetPublishedEssayByID(id uint8) (*models.Essay, error) {
 
 // GetUserEssays retrieves all essays for a specific user.
 func (s *EssayService) GetUserEssays(userID uint8) ([]models.Essay, error) {
-	query := `SELECT id, essay_text, completed_at, status, is_published, user_id, variant_id FROM essay WHERE user_id = $1`
+	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE user_id = $1`
 	rows, err := s.DB.Query(query, userID)
 	if err != nil {
 		log.Println("Error fetching user essays:", err)
@@ -103,7 +103,7 @@ func (s *EssayService) GetUserEssays(userID uint8) ([]models.Essay, error) {
 
 // CreateEssay creates a new essay in draft status.
 func (s *EssayService) CreateEssay(essay *models.Essay) error {
-	query := `INSERT INTO essay (essay_text, completed_at, status, is_published, user_id, variant_id) VALUES ($1, $2, $3, $4, $5, $6)`
+	query := `INSERT INTO essay (essay_text, updated_at, status, is_published, user_id, variant_id) VALUES ($1, $2, $3, $4, $5, $6)`
 	_, err := s.DB.Exec(query, essay.EssayText, time.Now(), "draft", false, essay.UserID, essay.VariantID)
 	if err != nil {
 		log.Println("Error creating essay:", err)
