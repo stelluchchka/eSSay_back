@@ -6,7 +6,7 @@ type User struct {
 	ID          uint8  `json:"id"`
 	Mail        string `json:"mail"`
 	Nickname    string `json:"nickname"`
-	Password    string `json:"password"` // Hashed password
+	Password    string `json:"password"`
 	IsModerator bool   `json:"is_moderator"`
 	CountChecks int    `json:"count_checks"`
 }
@@ -14,7 +14,7 @@ type User struct {
 type Essay struct {
 	ID          uint8     `json:"id"`
 	EssayText   string    `json:"essay_text"`
-	CompletedAt time.Time `json:"completed_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 	Status      string    `json:"status"`
 	IsPublished bool      `json:"is_published"`
 	UserID      uint8     `json:"user_id"`
@@ -28,10 +28,10 @@ type Variant struct {
 }
 
 type Comment struct {
-	UserID          uint8     `json:"user_id"`
-	EssayID         int       `json:"essay_id"`
-	CommentText     string    `json:"comment_text"`
-	CommentDateTime time.Time `json:"comment_datetime"`
+	UserID      uint8     `json:"user_id"`
+	EssayID     int       `json:"essay_id"`
+	CommentText string    `json:"comment_text"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type Like struct {

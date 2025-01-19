@@ -43,7 +43,7 @@ func initializeDatabase() *sql.DB {
 		log.Fatal("Failed to ping database:", err)
 	}
 
-	log.Printf("Successfully connected to the database")
+	log.Println("Successfully connected to the database")
 
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(10)
@@ -52,4 +52,14 @@ func initializeDatabase() *sql.DB {
 	dbInstance = db
 
 	return dbInstance
+}
+func CloseDB() {
+	if dbInstance != nil {
+		err := dbInstance.Close()
+		if err != nil {
+			log.Printf("Failed to close the database connection: %v", err)
+		} else {
+			log.Println("Database connection closed.")
+		}
+	}
 }
