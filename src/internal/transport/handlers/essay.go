@@ -31,12 +31,12 @@ func (h *EssayHandler) RegisterRoutes(mux *http.ServeMux) {
 
 // GetPublishedEssays handles GET /published/essays.
 func (h *EssayHandler) GetPublishedEssays(w http.ResponseWriter, r *http.Request) {
+	log.Print("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	log.Println("Handling request: GET /published/essays")
 	essays, err := h.EssayService.GetPublishedEssays()
 	if err != nil {
 		log.Printf("Error retrieving essays: %v", err)
@@ -49,6 +49,7 @@ func (h *EssayHandler) GetPublishedEssays(w http.ResponseWriter, r *http.Request
 
 // GetPublishedEssayByID handles GET /published/essays/:id.
 func (h *EssayHandler) GetPublishedEssayByID(w http.ResponseWriter, r *http.Request) {
+	log.Print("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
@@ -61,7 +62,6 @@ func (h *EssayHandler) GetPublishedEssayByID(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Invalid essay ID", http.StatusBadRequest)
 		return
 	}
-	log.Printf("Handling request: GET /published/essays/%d", id)
 
 	essay, err := h.EssayService.GetPublishedEssayByID(uint8(id))
 	if err != nil {
@@ -81,11 +81,12 @@ func (h *EssayHandler) GetPublishedEssayByID(w http.ResponseWriter, r *http.Requ
 
 // GetUserEssays handles GET /user/essays.
 func (h *EssayHandler) GetUserEssays(w http.ResponseWriter, r *http.Request) {
+	log.Print("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	log.Println("Handling request: GET /user/essays")
+
 	userID := 1 //TODO: добавить получение user_id из сессии
 
 	essays, err := h.EssayService.GetUserEssays(uint8(userID))
@@ -101,12 +102,11 @@ func (h *EssayHandler) GetUserEssays(w http.ResponseWriter, r *http.Request) {
 
 // CreateEssay handles POST /essays.
 func (h *EssayHandler) CreateEssay(w http.ResponseWriter, r *http.Request) {
+	log.Print("POST ", r.URL.Path)
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	log.Println("Handling request: POST /essays")
 
 	var reqBody struct {
 		EssayText string `json:"essay_text"`
@@ -160,6 +160,8 @@ func (h *EssayHandler) HandleEssayPutRequests(w http.ResponseWriter, r *http.Req
 
 // UpdateEssay handles PUT /essays/:id.
 func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
+	log.Print("PUT ", r.URL.Path)
+
 	parts := strings.Split(r.URL.Path, "/")
 	id, err := strconv.Atoi(parts[2])
 	if err != nil {
@@ -167,7 +169,6 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid essay ID", http.StatusBadRequest)
 		return
 	}
-	log.Printf("Handling request: PUT /essays/%d", id)
 
 	var reqBody struct {
 		EssayText string `json:"essay_text"`
@@ -197,6 +198,7 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 
 // ChangeEssayStatus handles PUT /essays/<action>/:id.
 func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) {
+	log.Print("PUT ", r.URL.Path)
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) != 4 {
 		log.Println("Essay ID or action not provided in the request URL")
@@ -211,8 +213,6 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	action := parts[3]
-
-	log.Printf("Handling request: PUT /essays/%d/%s", id, action)
 
 	userID := uint8(1) // TODO: добавить получение user_id из сессии
 
