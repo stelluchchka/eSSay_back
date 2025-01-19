@@ -54,14 +54,14 @@ func (h *EssayHandler) GetPublishedEssayByID(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	idParam := r.URL.Query().Get("id")
-	log.Printf("Handling request: GET /published/essays/%s", idParam)
-	id, err := strconv.Atoi(idParam)
+	parts := strings.Split(r.URL.Path, "/")
+	id, err := strconv.Atoi(parts[3])
 	if err != nil {
 		log.Printf("Invalid essay ID: %v", err)
 		http.Error(w, "Invalid essay ID", http.StatusBadRequest)
 		return
 	}
+	log.Printf("Handling request: GET /published/essays/%d", id)
 
 	essay, err := h.EssayService.GetPublishedEssayByID(uint8(id))
 	if err != nil {
