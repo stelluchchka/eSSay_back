@@ -231,6 +231,7 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		status = "saved"
+		// TODO: положить в очередь на проверку
 	case "appeal":
 		essay, err := h.EssayService.GetEssayByID(uint8(id))
 		if err != nil {
