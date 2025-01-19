@@ -18,7 +18,7 @@ CREATE TABLE variant (
 CREATE TABLE essay (
     id SERIAL PRIMARY KEY,
     essay_text TEXT,
-    completed_at TIMESTAMP,
+    updated_at TIMESTAMP,
     status STATUS,
     is_published BOOLEAN DEFAULT FALSE,
     user_id INTEGER,
@@ -31,7 +31,7 @@ CREATE TABLE comment (
     user_id INTEGER,
     essay_id INTEGER,
     comment_text TEXT,
-    comment_datetime TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY (user_id, essay_id),
     FOREIGN KEY (user_id) REFERENCES "user"(id),
     FOREIGN KEY (essay_id) REFERENCES essay(id)
@@ -54,7 +54,7 @@ CREATE TABLE result (
 
 CREATE TABLE criteria (
     id SERIAL PRIMARY KEY,
-    title CHAR NOT NULL
+    title TEXT NOT NULL
 );
 
 CREATE TABLE result_criteria (
