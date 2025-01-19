@@ -1,4 +1,4 @@
-CREATE TYPE STATUS AS ENUM ('draft', 'saved', 'checked', 'appeal');
+CREATE TYPE STATUS AS ENUM ('draft', 'saved', 'checked', 'appeal', 'appealed');
 
 CREATE TABLE "user" (
     id SERIAL PRIMARY KEY,
