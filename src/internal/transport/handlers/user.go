@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"essay/src/internal/config"
 	"essay/src/internal/models"
 	"essay/src/internal/services"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"strings"
 )
 
+// логирование, логин
 type UserHandler struct {
 	UserService *services.UserService
 }
@@ -23,8 +25,63 @@ func NewUserHandler(userService *services.UserService) *UserHandler {
 }
 
 func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/users/login", h.HandleLogin)
+	mux.HandleFunc("/users/logout", h.HandleLogout)
 	mux.HandleFunc("/users/", h.HandleUsers)
 	mux.HandleFunc("/users", h.HandleCreateUser)
+}
+
+func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
+	log.Println("POST ", r.URL.Path)
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var credentials struct {
+		Mail     string `json:"mail"`
+		Password string `json:"password"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&credentials)
+	if err != nil {
+		log.Printf("Error decoding login request: %v\n", err)
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.UserService.Authenticate(credentials.Mail, credentials.Password)
+	if err != nil {
+		if errors.Is(err, services.ErrInvalidCredentials) {
+			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	session, _ := config.SessionStore.Get(r, "session")
+	session.Values["user_id"] = user.ID
+	session.Values["is_moderator"] = user.IsModerator
+	err = session.Save(r, w)
+	if err != nil {
+		log.Printf("Error saving session: %v\n", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Logged in successfully")
+}
+
+func (h *UserHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
+	log.Println("GET ", r.URL.Path)
+
+	session, _ := config.SessionStore.Get(r, "session")
+	delete(session.Values, "user_id")
+	delete(session.Values, "is_moderator")
+	session.Save(r, w)
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Logged out successfully")
 }
 
 func (h *UserHandler) HandleUsers(w http.ResponseWriter, r *http.Request) {
@@ -69,6 +126,11 @@ func (h *UserHandler) HandleUsers(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("POST ", r.URL.Path)
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	var user models.User
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&user)

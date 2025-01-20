@@ -7,11 +7,11 @@ import (
 	"essay/src/internal/database"
 	"essay/src/internal/models"
 	"fmt"
-	"log"
 	"strings"
 )
 
 var ErrDuplicateEmail = errors.New("email already in use")
+var ErrInvalidCredentials = errors.New("invalid email or password")
 
 type UserService struct {
 	DB *sql.DB
@@ -38,7 +38,6 @@ func (s *UserService) GetUserByID(id int) (*models.User, error) {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		log.Println("Error fetching user:", err)
 		return nil, err
 	}
 
@@ -46,21 +45,33 @@ func (s *UserService) GetUserByID(id int) (*models.User, error) {
 }
 
 func (s *UserService) CreateUser(user *models.User) error {
-	log.Printf("Attempting to create user: %s\n", user.Nickname)
-
 	hashedPassword := hashPassword(user.Password)
 
 	query := `INSERT INTO "user" (mail, nickname, password) VALUES ($1, $2, $3)`
 	_, err := s.DB.Exec(query, user.Mail, user.Nickname, hashedPassword)
 	if err != nil {
 		if strings.Contains(err.Error(), "unique constraint") {
-			log.Printf("Duplicate email detected for user %s: %v\n", user.Nickname, err)
 			return ErrDuplicateEmail
 		}
-		log.Printf("Error creating user %s: %v\n", user.Nickname, err)
 		return err
 	}
 
-	log.Printf("User %s successfully created\n", user.Nickname)
 	return nil
+}
+func (s *UserService) Authenticate(mail, password string) (*models.User, error) {
+	user := &models.User{}
+	query := `SELECT id, password, is_moderator FROM "user" WHERE mail = $1`
+	err := s.DB.QueryRow(query, mail).Scan(&user.ID, &user.Password, &user.IsModerator)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrInvalidCredentials
+		}
+		return nil, err
+	}
+
+	if hashPassword(password) != user.Password {
+		return nil, ErrInvalidCredentials
+	}
+
+	return user, nil
 }

@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 )
 
@@ -37,4 +38,15 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+var SessionStore *sessions.CookieStore
+
+func InitSessionStore() {
+	SessionStore = sessions.NewCookieStore([]byte(getEnv("SECRET_KEY", "SECRET_KEYSECRET_KEY")))
+	SessionStore.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   7 * 24 * 60 * 60, // неделя
+		HttpOnly: true,
+	}
 }

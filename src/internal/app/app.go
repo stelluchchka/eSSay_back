@@ -1,6 +1,7 @@
 package app
 
 import (
+	"essay/src/internal/config"
 	"essay/src/internal/database"
 	"essay/src/internal/services"
 	"essay/src/internal/transport/handlers"
@@ -36,6 +37,7 @@ func NewApp() *App {
 }
 
 func (a *App) Start() {
+	config.InitSessionStore()
 	mux := http.NewServeMux()
 
 	a.UserHandler.RegisterRoutes(mux)

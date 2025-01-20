@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"essay/src/internal/config"
 	"essay/src/internal/models"
 	"essay/src/internal/services"
 )
@@ -87,9 +89,15 @@ func (h *EssayHandler) GetUserEssays(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := 1 //TODO: добавить получение user_id из сессии
+	session, _ := config.SessionStore.Get(r, "session")
+	userIDInterface, ok := session.Values["user_id"]
+	if !ok {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	userID := userIDInterface.(uint8)
 
-	essays, err := h.EssayService.GetUserEssays(uint8(userID))
+	essays, err := h.EssayService.GetUserEssays(userID)
 	if err != nil {
 		log.Printf("Error retrieving user essays: %v", err)
 		http.Error(w, "Failed to retrieve user essays", http.StatusInternalServerError)
@@ -119,11 +127,19 @@ func (h *EssayHandler) CreateEssay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	session, _ := config.SessionStore.Get(r, "session")
+	userIDInterface, ok := session.Values["user_id"]
+	if !ok {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	userID := userIDInterface.(uint8)
+
 	var essay models.Essay
 	essay.Status = "draft"
 	essay.EssayText = reqBody.EssayText
 	essay.VariantID = reqBody.VariantId
-	essay.UserID = uint8(1) // TODO: добавить получение user_id из сессии
+	essay.UserID = userID
 
 	if err := h.EssayService.CreateEssay(&essay); err != nil {
 		log.Printf("Failed to create essay: %v", err)
@@ -150,6 +166,9 @@ func (h *EssayHandler) HandleEssayPutRequests(w http.ResponseWriter, r *http.Req
 
 	if r.Method == http.MethodPut && (strings.HasSuffix(r.URL.Path, "/save") || strings.HasSuffix(r.URL.Path, "/appeal") || strings.HasSuffix(r.URL.Path, "/publish")) {
 		h.ChangeEssayStatus(w, r)
+		return
+	} else if r.Method == http.MethodPut && (strings.HasSuffix(r.URL.Path, "/check")) {
+		h.CheckEssay(w, r)
 		return
 	} else if r.Method == http.MethodPut {
 		h.UpdateEssay(w, r)
@@ -180,13 +199,25 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	session, _ := config.SessionStore.Get(r, "session")
+	userIDInterface, ok := session.Values["user_id"]
+	if !ok {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	userID := userIDInterface.(uint8)
+
 	var essay models.Essay
 	essay.ID = uint8(id)
 	essay.EssayText = reqBody.EssayText
-	essay.UserID = uint8(1) // TODO: добавить получение user_id из сессии
+	essay.UserID = userID
 
 	log.Printf("Updating essay: %+v", essay)
 	if err := h.EssayService.UpdateEssay(&essay); err != nil {
+		if errors.Is(err, services.ErrWrongID) {
+			http.Error(w, "Wrong id or essayID", http.StatusBadRequest)
+			return
+		}
 		log.Printf("Failed to update essay: %v", err)
 		http.Error(w, "Failed to update essay", http.StatusInternalServerError)
 		return
@@ -196,7 +227,7 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// ChangeEssayStatus handles PUT /essays/<action>/:id.
+// ChangeEssayStatus handles PUT /essays/:id/<action>.
 func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) {
 	log.Print("PUT ", r.URL.Path)
 	parts := strings.Split(r.URL.Path, "/")
@@ -214,7 +245,13 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 	}
 	action := parts[3]
 
-	userID := uint8(1) // TODO: добавить получение user_id из сессии
+	session, _ := config.SessionStore.Get(r, "session")
+	userIDInterface, ok := session.Values["user_id"]
+	if !ok {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	userID := userIDInterface.(uint8)
 
 	var status string
 	switch action {
@@ -262,7 +299,7 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 	}
 
 	log.Printf("Changing essay status to '%s' for essay ID %d", status, id)
-	if err := h.EssayService.ChangeEssayStatus(uint8(id), uint8(userID), status); err != nil {
+	if err := h.EssayService.ChangeEssayStatus(uint8(id), userID, status); err != nil {
 		log.Printf("Failed to change essay status: %v", err)
 		http.Error(w, "Failed to change essay status", http.StatusInternalServerError)
 		return
@@ -270,4 +307,17 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 
 	log.Printf("Essay status changed successfully: ID %d, status %s", id, status)
 	w.WriteHeader(http.StatusOK)
+}
+
+// CheckEssay handles PUT /essays/:id/check.
+func (h *EssayHandler) CheckEssay(w http.ResponseWriter, r *http.Request) {
+	log.Print("PUT ", r.URL.Path)
+
+	session, _ := config.SessionStore.Get(r, "session")
+	isModerator, ok := session.Values["is_moderator"].(bool)
+	if !ok || !isModerator {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	//TODO: логика модератора
 }

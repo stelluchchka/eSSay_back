@@ -1,9 +1,9 @@
 -- Добавление пользователей
 INSERT INTO "user" (mail, nickname, password, is_moderator, count_checks)
 VALUES
-('user1@example.com', 'User1', '"03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"', FALSE, 2),
-('user2@example.com', 'User2', '"03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"', FALSE, 2),
-('moderator@example.com', 'ModUser', '"03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"', TRUE, 2);
+('user1@example.com', 'User1', '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', FALSE, 2),
+('user2@example.com', 'User2', '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', FALSE, 2),
+('moderator@example.com', 'ModUser', '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', TRUE, 2);
 
 -- Добавление вариантов
 INSERT INTO variant (variant_text, author_position)
