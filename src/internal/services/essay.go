@@ -41,6 +41,27 @@ func (s *EssayService) GetPublishedEssays() ([]models.Essay, error) {
 	return essays, nil
 }
 
+// GetPublishedEssays retrieves all appeal essays.
+func (s *EssayService) GetAppealEssays() ([]models.Essay, error) {
+	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE status = 'appeal'`
+	rows, err := s.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	essays := []models.Essay{}
+	for rows.Next() {
+		var essay models.Essay
+		if err := rows.Scan(&essay.ID, &essay.EssayText, &essay.UpdatedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
+			return nil, err
+		}
+		essays = append(essays, essay)
+	}
+
+	return essays, nil
+}
+
 // GetEssayByID retrieves a published essay by its ID.
 func (s *EssayService) GetEssayByID(id uint8) (*models.Essay, error) {
 	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE id = $1`

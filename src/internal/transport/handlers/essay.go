@@ -25,10 +25,10 @@ func NewEssayHandler(essayService *services.EssayService) *EssayHandler {
 
 func (h *EssayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/published/essays", h.GetPublishedEssays)
+	mux.HandleFunc("/appeal/essays", h.GetAppealEssays)
 	mux.HandleFunc("/published/essays/", h.GetPublishedEssayByID)
 	mux.HandleFunc("/user/essays", h.GetUserEssays)
 	mux.HandleFunc("/essays", h.CreateEssay)
-	mux.HandleFunc("/essays/", h.HandleEssayPutRequests)
 }
 
 // GetPublishedEssays handles GET /published/essays.
@@ -40,6 +40,31 @@ func (h *EssayHandler) GetPublishedEssays(w http.ResponseWriter, r *http.Request
 	}
 
 	essays, err := h.EssayService.GetPublishedEssays()
+	if err != nil {
+		log.Printf("Error retrieving essays: %v", err)
+		http.Error(w, "Failed to retrieve essays", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(essays)
+}
+
+// CheckEssay handles GET /appeal/essays.
+func (h *EssayHandler) GetAppealEssays(w http.ResponseWriter, r *http.Request) {
+	log.Print("GET ", r.URL.Path)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	session, _ := config.SessionStore.Get(r, "session")
+	isModerator, ok := session.Values["is_moderator"].(bool)
+	if !ok || !isModerator {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	essays, err := h.EssayService.GetAppealEssays()
 	if err != nil {
 		log.Printf("Error retrieving essays: %v", err)
 		http.Error(w, "Failed to retrieve essays", http.StatusInternalServerError)
@@ -166,9 +191,6 @@ func (h *EssayHandler) HandleEssayPutRequests(w http.ResponseWriter, r *http.Req
 
 	if r.Method == http.MethodPut && (strings.HasSuffix(r.URL.Path, "/save") || strings.HasSuffix(r.URL.Path, "/appeal") || strings.HasSuffix(r.URL.Path, "/publish")) {
 		h.ChangeEssayStatus(w, r)
-		return
-	} else if r.Method == http.MethodPut && (strings.HasSuffix(r.URL.Path, "/check")) {
-		h.CheckEssay(w, r)
 		return
 	} else if r.Method == http.MethodPut {
 		h.UpdateEssay(w, r)
@@ -307,17 +329,4 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 
 	log.Printf("Essay status changed successfully: ID %d, status %s", id, status)
 	w.WriteHeader(http.StatusOK)
-}
-
-// CheckEssay handles PUT /essays/:id/check.
-func (h *EssayHandler) CheckEssay(w http.ResponseWriter, r *http.Request) {
-	log.Print("PUT ", r.URL.Path)
-
-	session, _ := config.SessionStore.Get(r, "session")
-	isModerator, ok := session.Values["is_moderator"].(bool)
-	if !ok || !isModerator {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
-	}
-	//TODO: логика модератора
 }
