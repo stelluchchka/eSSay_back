@@ -48,6 +48,7 @@ CREATE TABLE "like" (
 CREATE TABLE result (
     id SERIAL PRIMARY KEY,
     sum_score INTEGER,
+    appeal_text TEXT,
     essay_id INTEGER,
     FOREIGN KEY (essay_id) REFERENCES essay(id)
 );
