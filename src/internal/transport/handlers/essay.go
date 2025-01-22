@@ -29,6 +29,7 @@ func (h *EssayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/published/essays/", h.GetPublishedEssayByID)
 	mux.HandleFunc("/user/essays", h.GetUserEssays)
 	mux.HandleFunc("/essays", h.CreateEssay)
+	mux.HandleFunc("/essays/", h.HandleEssayPutRequests)
 }
 
 // GetPublishedEssays handles GET /published/essays.
@@ -91,7 +92,7 @@ func (h *EssayHandler) GetPublishedEssayByID(w http.ResponseWriter, r *http.Requ
 	}
 
 	essay, err := h.EssayService.GetPublishedEssayByID(uint8(id))
-	if err != nil {
+	if err != nil || errors.Is(err, services.ErrNoRows) {
 		log.Printf("Error retrieving essay: %v", err)
 		http.Error(w, "Failed to retrieve essay", http.StatusInternalServerError)
 		return
@@ -211,16 +212,6 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var reqBody struct {
-		EssayText string `json:"essay_text"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		log.Printf("Invalid request body: %v", err)
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
 	session, _ := config.SessionStore.Get(r, "session")
 	userIDInterface, ok := session.Values["user_id"]
 	if !ok {
@@ -229,15 +220,40 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := userIDInterface.(uint8)
 
-	var essay models.Essay
-	essay.ID = uint8(id)
-	essay.EssayText = reqBody.EssayText
-	essay.UserID = userID
+	essay, err := h.EssayService.GetEssayByID(uint8(id))
+	if err != nil {
+		if errors.Is(err, services.ErrNoRows) {
+			log.Printf("Failed to find essay with id %d: %v", id, err)
+			http.Error(w, "Failed to find essay", http.StatusBadRequest)
+			return
+		}
+		log.Printf("Failed to find essay with id %d: %v", id, err)
+		http.Error(w, "Failed to find essay", http.StatusInternalServerError)
+		return
+	}
+	if essay.UserID != userID {
+		log.Printf("Failed to save essay with id %d: wrong user ID", id)
+		http.Error(w, "Failed to save essay: wrong user ID", http.StatusForbidden)
+		return
+	}
 
-	log.Printf("Updating essay: %+v", essay)
-	if err := h.EssayService.UpdateEssay(&essay); err != nil {
+	var reqBody struct {
+		EssayText string `json:"essay_text"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		log.Printf("Invalid request body: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+	var newEssay models.Essay
+	newEssay.ID = uint8(id)
+	newEssay.EssayText = reqBody.EssayText
+	newEssay.UserID = userID
+
+	log.Printf("Updating essay with id %d, text %s", newEssay.ID, newEssay.EssayText)
+	if err := h.EssayService.UpdateEssay(&newEssay); err != nil {
 		if errors.Is(err, services.ErrWrongID) {
-			http.Error(w, "Wrong id or essayID", http.StatusBadRequest)
+			http.Error(w, "Wrong id", http.StatusBadRequest)
 			return
 		}
 		log.Printf("Failed to update essay: %v", err)
@@ -245,7 +261,7 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Essay updated successfully: %+v", essay)
+	log.Print("Essay updated successfully")
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -275,15 +291,27 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 	}
 	userID := userIDInterface.(uint8)
 
-	var status string
-	switch action {
-	case "save":
-		essay, err := h.EssayService.GetEssayByID(uint8(id))
-		if err != nil {
+	essay, err := h.EssayService.GetEssayByID(uint8(id))
+	if err != nil {
+		if errors.Is(err, services.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
-			http.Error(w, "Failed to find essay: %v", http.StatusInternalServerError)
+			http.Error(w, "Failed to find essay", http.StatusBadRequest)
 			return
 		}
+		log.Printf("Failed to find essay with id %d: %v", id, err)
+		http.Error(w, "Failed to find essay", http.StatusInternalServerError)
+		return
+	}
+	if essay.UserID != userID {
+		log.Printf("Failed to set status %s to essay with id %d: wrong user ID", action, id)
+		http.Error(w, "Failed to save essay: wrong user ID", http.StatusForbidden)
+		return
+	}
+
+	var status string
+
+	switch action {
+	case "save":
 		if essay.Status != "draft" {
 			log.Printf("Failed to save essay with id %d: status should be draft", id)
 			http.Error(w, "Failed to save essay: status should be draft", http.StatusBadRequest)
@@ -292,12 +320,6 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 		status = "saved"
 		// TODO: положить в очередь на проверку
 	case "appeal":
-		essay, err := h.EssayService.GetEssayByID(uint8(id))
-		if err != nil {
-			log.Printf("Failed to find essay with id %d: %v", id, err)
-			http.Error(w, "Failed to find essay: %v", http.StatusInternalServerError)
-			return
-		}
 		if essay.Status != "checked" {
 			log.Printf("Failed to file appeal for essay with id %d: status should be checked", id)
 			http.Error(w, "Failed to file appeal for essay: status should be checked", http.StatusBadRequest)
@@ -320,13 +342,13 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	log.Printf("Changing essay status to '%s' for essay ID %d", status, id)
+	log.Printf("Changing essay status to '%s' for essayID %d for userID %d", status, id, userID)
 	if err := h.EssayService.ChangeEssayStatus(uint8(id), userID, status); err != nil {
 		log.Printf("Failed to change essay status: %v", err)
 		http.Error(w, "Failed to change essay status", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Essay status changed successfully: ID %d, status %s", id, status)
+	log.Print("Essay status changed successfully")
 	w.WriteHeader(http.StatusOK)
 }

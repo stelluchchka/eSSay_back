@@ -28,8 +28,9 @@ type Variant struct {
 }
 
 type Comment struct {
+	ID          uint8     `json:"id"`
 	UserID      uint8     `json:"user_id"`
-	EssayID     int       `json:"essay_id"`
+	EssayID     uint8     `json:"essay_id"`
 	CommentText string    `json:"comment_text"`
 	CreatedAt   time.Time `json:"created_at"`
 }
@@ -40,9 +41,10 @@ type Like struct {
 }
 
 type Result struct {
-	ID       uint8 `json:"id"`
-	SumScore int   `json:"sum_score"`
-	EssayID  uint8 `json:"essay_id"`
+	ID         uint8  `json:"id"`
+	SumScore   int    `json:"sum_score"`
+	AppealText string `json:"appeal_text"`
+	EssayID    uint8  `json:"essay_id"`
 }
 
 type Criteria struct {

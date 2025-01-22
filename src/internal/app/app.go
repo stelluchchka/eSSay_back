@@ -5,59 +5,56 @@ import (
 	"essay/src/internal/database"
 	"essay/src/internal/services"
 	"essay/src/internal/transport/handlers"
-	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 type App struct {
-	UserService  *services.UserService
-	EssayService *services.EssayService
+	DB *database.DB
 
-	UserHandler  *handlers.UserHandler
-	EssayHandler *handlers.EssayHandler
+	UserService    *services.UserService
+	EssayService   *services.EssayService
+	ContentService *services.ContentService
+
+	UserHandler    *handlers.UserHandler
+	EssayHandler   *handlers.EssayHandler
+	ContentHandler *handlers.ContentHandler
 }
 
 func NewApp() *App {
-	userService := services.NewUserService()
-	essayService := services.NewEssayService()
+	db := database.GetPostgreSQLConnection()
+
+	userService := services.NewUserService(db.Instance)
+	essayService := services.NewEssayService(db.Instance)
+	contentService := services.NewContentService(db.Instance)
 
 	userHandler := handlers.NewUserHandler(userService)
 	essayHandler := handlers.NewEssayHandler(essayService)
+	contentHandler := handlers.NewContentHandler(contentService, essayService)
 
 	return &App{
-		UserService:  userService,
-		EssayService: essayService,
+		DB: db,
 
-		UserHandler:  userHandler,
-		EssayHandler: essayHandler,
+		UserService:    userService,
+		EssayService:   essayService,
+		ContentService: contentService,
+
+		UserHandler:    userHandler,
+		EssayHandler:   essayHandler,
+		ContentHandler: contentHandler,
 	}
 }
 
-func (a *App) Start() {
+func (a *App) Close() {
+	a.DB.Close()
+}
+
+func (a *App) ServeMux() *http.ServeMux {
 	config.InitSessionStore()
 	mux := http.NewServeMux()
 
 	a.UserHandler.RegisterRoutes(mux)
 	a.EssayHandler.RegisterRoutes(mux)
+	a.ContentHandler.RegisterRoutes(mux)
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		log.Println("Starting server on :8080")
-		err := http.ListenAndServe(":8080", mux)
-		if err != nil {
-			log.Fatal("Error starting server:", err)
-		}
-	}()
-
-	<-stop
-	log.Println("Shutting down server...")
-
-	database.CloseDB()
-
-	log.Println("Server stopped")
+	return mux
 }

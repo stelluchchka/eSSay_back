@@ -28,11 +28,11 @@ CREATE TABLE essay (
 );
 
 CREATE TABLE comment (
+    id SERIAL PRIMARY KEY,
     user_id INTEGER,
     essay_id INTEGER,
     comment_text TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
-    PRIMARY KEY (user_id, essay_id),
     FOREIGN KEY (user_id) REFERENCES "user"(id),
     FOREIGN KEY (essay_id) REFERENCES essay(id)
 );

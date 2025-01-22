@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
-	"essay/src/internal/database"
 	"essay/src/internal/models"
 	"fmt"
 	"strings"
@@ -17,9 +16,9 @@ type UserService struct {
 	DB *sql.DB
 }
 
-func NewUserService() *UserService {
+func NewUserService(db *sql.DB) *UserService {
 	return &UserService{
-		DB: database.GetPostgreSQLConnection(),
+		DB: db,
 	}
 }
 

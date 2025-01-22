@@ -2,22 +2,26 @@ package database
 
 import (
 	"database/sql"
+	"essay/src/internal/config"
 	"fmt"
 	"log"
 	"sync"
 	"time"
 
-	"essay/src/internal/config"
-
 	_ "github.com/lib/pq"
 )
 
-var dbInstance *sql.DB
+type DB struct {
+	Instance *sql.DB
+}
+
+var dbInstance *DB
 var once sync.Once
 
-func GetPostgreSQLConnection() *sql.DB {
+func GetPostgreSQLConnection() *DB {
 	once.Do(func() {
-		dbInstance = initializeDatabase()
+		db := initializeDatabase()
+		dbInstance = &DB{Instance: db}
 	})
 	log.Println()
 	return dbInstance
@@ -49,17 +53,18 @@ func initializeDatabase() *sql.DB {
 	db.SetMaxIdleConns(10)
 	db.SetConnMaxLifetime(5 * time.Minute)
 
-	dbInstance = db
-
-	return dbInstance
+	return db
 }
-func CloseDB() {
-	if dbInstance != nil {
-		err := dbInstance.Close()
+
+func (db *DB) Close() error {
+	if db.Instance != nil {
+		err := db.Instance.Close()
 		if err != nil {
 			log.Printf("Failed to close the database connection: %v", err)
-		} else {
-			log.Println("Database connection closed.")
+			return err
 		}
+		log.Println("Database connection closed.")
+		db.Instance = nil
 	}
+	return nil
 }

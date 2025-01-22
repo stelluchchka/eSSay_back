@@ -1,0 +1,17 @@
+SELECT COUNT(*) FROM pg_stat_activity WHERE pid <> pg_backend_pid();
+
+select * from "user"
+select * from result
+select * from essay
+select * from "like"
+select * from comment
+
+
+
+go run src/cmd/app/main.go
+
+user1
+session=MTczNzMzNTYxM3xEWDhFQVFMX2dBQUJFQUVRQUFCQV80QUFBZ1p6ZEhKcGJtY01DUUFIZFhObGNsOXBaQVYxYVc1ME9BWUNBQUVHYzNSeWFXNW5EQTRBREdselgyMXZaR1Z5WVhSdmNnUmliMjlzQWdJQUFBPT18GGIBJfEi55z-xgsph431YpE5stfksWBowtPhSU3nWR0=; Path=/; Expires=Mon, 27 Jan 2025 01:13:33 GMT; Max-Age=604800; HttpOnly
+
+moderator
+session=MTczNzMzNzE2N3xEWDhFQVFMX2dBQUJFQUVRQUFCQV80QUFBZ1p6ZEhKcGJtY01EZ0FNYVhOZmJXOWtaWEpoZEc5eUJHSnZiMndDQWdBQkJuTjBjbWx1Wnd3SkFBZDFjMlZ5WDJsa0JYVnBiblE0QmdJQUF3PT18h1beWjF-9J8qBOKxr4JF8V5dNofgdsZ7V4pi3o6Me1o=

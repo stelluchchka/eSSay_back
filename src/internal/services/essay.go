@@ -3,20 +3,20 @@ package services
 import (
 	"database/sql"
 	"errors"
-	"essay/src/internal/database"
 	"essay/src/internal/models"
 	"time"
 )
 
-var ErrWrongID = errors.New("wrong id or user_id")
+var ErrWrongID = errors.New("wrong id")
+var ErrNoRows = errors.New("query doesn't return a row")
 
 type EssayService struct {
 	DB *sql.DB
 }
 
-func NewEssayService() *EssayService {
+func NewEssayService(db *sql.DB) *EssayService {
 	return &EssayService{
-		DB: database.GetPostgreSQLConnection(),
+		DB: db,
 	}
 }
 
@@ -70,7 +70,7 @@ func (s *EssayService) GetEssayByID(id uint8) (*models.Essay, error) {
 	var essay models.Essay
 	if err := row.Scan(&essay.ID, &essay.EssayText, &essay.UpdatedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, ErrNoRows
 		}
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (s *EssayService) GetPublishedEssayByID(id uint8) (*models.Essay, error) {
 	var essay models.Essay
 	if err := row.Scan(&essay.ID, &essay.EssayText, &essay.UpdatedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, ErrNoRows
 		}
 		return nil, err
 	}

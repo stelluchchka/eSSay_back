@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-// логирование, логин
+// логирование
 type UserHandler struct {
 	UserService *services.UserService
 }
