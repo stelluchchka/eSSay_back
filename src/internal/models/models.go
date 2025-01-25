@@ -57,3 +57,22 @@ type ResultCriteria struct {
 	CriteriaID uint8 `json:"criteria_id"`
 	Score      int   `json:"score"`
 }
+
+type PublishedEssay struct {
+	ID          uint8                   `json:"id"`
+	EssayText   string                  `json:"essay_text"`
+	UpdatedAt   time.Time               `json:"updated_at"`
+	Status      string                  `json:"status"`
+	IsPublished bool                    `json:"is_published"`
+	VariantID   uint8                   `json:"variant_id"`
+	Nickname    string                  `json:"nickname"`
+	Likes       int                     `json:"likes"`
+	Comments    []PublishedEssayComment `json:"comments"`
+}
+
+type PublishedEssayComment struct {
+	ID          uint8     `json:"id"`
+	Nickname    string    `json:"nickname"`
+	CommentText string    `json:"comment_text"`
+	CreatedAt   time.Time `json:"created_at"`
+}

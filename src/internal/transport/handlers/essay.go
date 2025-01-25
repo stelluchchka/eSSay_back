@@ -28,6 +28,7 @@ func (h *EssayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/appeal/essays", h.GetAppealEssays)
 	mux.HandleFunc("/published/essays/", h.GetPublishedEssayByID)
 	mux.HandleFunc("/user/essays", h.GetUserEssays)
+	// TODO: mux.HandleFunc("/user/essays/", h.GetUserEssayByID)
 	mux.HandleFunc("/essays", h.CreateEssay)
 	mux.HandleFunc("/essays/", h.HandleEssayPutRequests)
 }
@@ -92,14 +93,14 @@ func (h *EssayHandler) GetPublishedEssayByID(w http.ResponseWriter, r *http.Requ
 	}
 
 	essay, err := h.EssayService.GetPublishedEssayByID(uint8(id))
-	if err != nil || errors.Is(err, services.ErrNoRows) {
+	if err != nil {
+		if errors.Is(err, services.ErrNoRows) {
+			log.Printf("Essay not found: ID %d", id)
+			http.Error(w, "Essay not found", http.StatusNotFound)
+			return
+		}
 		log.Printf("Error retrieving essay: %v", err)
 		http.Error(w, "Failed to retrieve essay", http.StatusInternalServerError)
-		return
-	}
-	if essay == nil {
-		log.Printf("Essay not found: ID %d", id)
-		http.Error(w, "Essay not found", http.StatusNotFound)
 		return
 	}
 
@@ -326,6 +327,7 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		status = "appeal"
+		// TODO: добавить текст аппеляции
 	case "publish":
 		log.Printf("Publishing essay: ID %d", id)
 		if err := h.EssayService.PublishEssay(uint8(id), userID); err != nil {
