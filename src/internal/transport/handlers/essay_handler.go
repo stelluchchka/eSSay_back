@@ -24,16 +24,52 @@ func NewEssayHandler(essayService *services.EssayService) *EssayHandler {
 }
 
 func (h *EssayHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/published/essays", h.GetPublishedEssays)
-	mux.HandleFunc("/appeal/essays", h.GetAppealEssays)
-	mux.HandleFunc("/published/essays/", h.GetPublishedEssayByID)
-	mux.HandleFunc("/user/essays", h.GetUserEssays)
-	// TODO: mux.HandleFunc("/user/essays/", h.GetUserEssayByID)
-	mux.HandleFunc("/essays", h.CreateEssay)
-	mux.HandleFunc("/essays/", h.HandleEssayPutRequests)
+	mux.HandleFunc("/essays", h.HandleEssaysRequests)
+	mux.HandleFunc("/essays/", h.HandleEssayRequests)
+	mux.HandleFunc("/essays/appeal", h.GetAppealEssays)
+	mux.HandleFunc("/users/me/essays", h.GetUserEssays)
 }
 
-// GetPublishedEssays handles GET /published/essays.
+// HandleEssaysRequests handles various methods on essays.
+func (h *EssayHandler) HandleEssaysRequests(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		h.GetPublishedEssays(w, r)
+		return
+	} else if r.Method == http.MethodPost {
+		h.CreateEssay(w, r)
+		return
+	}
+	http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+}
+
+// HandleEssayRequests handles various methods on essay.
+func (h *EssayHandler) HandleEssayRequests(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		h.GetEssayByID(w, r)
+		return
+	}
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 3 {
+		log.Println("Essay ID not provided in the request URL")
+		http.Error(w, "Essay ID is required", http.StatusBadRequest)
+		return
+	} else if len(parts) > 4 {
+		log.Println("404 page not found")
+		http.Error(w, "404 page not found", http.StatusNotFound)
+		return
+	}
+
+	if r.Method == http.MethodPut && (strings.HasSuffix(r.URL.Path, "/save") || strings.HasSuffix(r.URL.Path, "/appeal") || strings.HasSuffix(r.URL.Path, "/publish")) {
+		h.ChangeEssayStatus(w, r)
+		return
+	} else if r.Method == http.MethodPut {
+		h.UpdateEssay(w, r)
+		return
+	}
+	http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+}
+
+// GetPublishedEssays handles GET /essays.
 func (h *EssayHandler) GetPublishedEssays(w http.ResponseWriter, r *http.Request) {
 	log.Print("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
@@ -51,7 +87,7 @@ func (h *EssayHandler) GetPublishedEssays(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(essays)
 }
 
-// CheckEssay handles GET /appeal/essays.
+// GetAppealEssays handles GET /essays/appeal.
 func (h *EssayHandler) GetAppealEssays(w http.ResponseWriter, r *http.Request) {
 	log.Print("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
@@ -76,8 +112,8 @@ func (h *EssayHandler) GetAppealEssays(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(essays)
 }
 
-// GetPublishedEssayByID handles GET /published/essays/:id.
-func (h *EssayHandler) GetPublishedEssayByID(w http.ResponseWriter, r *http.Request) {
+// GetEssayByID handles GET /essays/:id.
+func (h *EssayHandler) GetEssayByID(w http.ResponseWriter, r *http.Request) {
 	log.Print("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -85,30 +121,50 @@ func (h *EssayHandler) GetPublishedEssayByID(w http.ResponseWriter, r *http.Requ
 	}
 
 	parts := strings.Split(r.URL.Path, "/")
-	id, err := strconv.Atoi(parts[3])
+	id, err := strconv.Atoi(parts[2])
 	if err != nil {
 		log.Printf("Invalid essay ID: %v", err)
 		http.Error(w, "Invalid essay ID", http.StatusBadRequest)
 		return
 	}
 
-	essay, err := h.EssayService.GetPublishedEssayByID(uint8(id))
-	if err != nil {
-		if errors.Is(err, services.ErrNoRows) {
-			log.Printf("Essay not found: ID %d", id)
-			http.Error(w, "Essay not found", http.StatusNotFound)
+	var essay interface{}
+
+	session, _ := config.SessionStore.Get(r, "session")
+	userIDInterface, ok := session.Values["user_id"]
+	if ok {
+		if userID := userIDInterface.(uint8); userID != uint8(id) {
+			essay, err = h.EssayService.GetDetailedEssayByID(uint8(id))
+			if err != nil {
+				if errors.Is(err, services.ErrNoRows) {
+					log.Printf("Essay not found: ID %d", id)
+					http.Error(w, "Essay not found", http.StatusNotFound)
+					return
+				}
+				log.Printf("Error retrieving essay: %v", err)
+				http.Error(w, "Failed to retrieve essay", http.StatusInternalServerError)
+				return
+			}
+		}
+	} else {
+		essay, err = h.EssayService.GetDetailedPublishedEssayByID(uint8(id))
+		if err != nil {
+			if errors.Is(err, services.ErrNoRows) {
+				log.Printf("Essay not found: ID %d", id)
+				http.Error(w, "Essay not found", http.StatusNotFound)
+				return
+			}
+			log.Printf("Error retrieving essay: %v", err)
+			http.Error(w, "Failed to retrieve essay", http.StatusInternalServerError)
 			return
 		}
-		log.Printf("Error retrieving essay: %v", err)
-		http.Error(w, "Failed to retrieve essay", http.StatusInternalServerError)
-		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(essay)
 }
 
-// GetUserEssays handles GET /user/essays.
+// GetUserEssays handles GET /users/me/essays.
 func (h *EssayHandler) GetUserEssays(w http.ResponseWriter, r *http.Request) {
 	log.Print("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
@@ -176,29 +232,6 @@ func (h *EssayHandler) CreateEssay(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Essay created successfully: %+v", essay)
 	w.WriteHeader(http.StatusCreated)
-}
-
-// HandleEssayPutRequests handles various actions on essays, including status changes.
-func (h *EssayHandler) HandleEssayPutRequests(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 {
-		log.Println("Essay ID not provided in the request URL")
-		http.Error(w, "Essay ID is required", http.StatusBadRequest)
-		return
-	} else if len(parts) > 4 {
-		log.Println("404 page not found")
-		http.Error(w, "404 page not found", http.StatusNotFound)
-		return
-	}
-
-	if r.Method == http.MethodPut && (strings.HasSuffix(r.URL.Path, "/save") || strings.HasSuffix(r.URL.Path, "/appeal") || strings.HasSuffix(r.URL.Path, "/publish")) {
-		h.ChangeEssayStatus(w, r)
-		return
-	} else if r.Method == http.MethodPut {
-		h.UpdateEssay(w, r)
-		return
-	}
-	http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 }
 
 // UpdateEssay handles PUT /essays/:id.

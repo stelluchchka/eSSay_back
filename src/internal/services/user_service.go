@@ -57,6 +57,7 @@ func (s *UserService) CreateUser(user *models.User) error {
 
 	return nil
 }
+
 func (s *UserService) Authenticate(mail, password string) (*models.User, error) {
 	user := &models.User{}
 	query := `SELECT id, password, is_moderator FROM "user" WHERE mail = $1`

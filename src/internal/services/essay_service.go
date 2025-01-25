@@ -62,7 +62,7 @@ func (s *EssayService) GetAppealEssays() ([]models.Essay, error) {
 	return essays, nil
 }
 
-// GetEssayByID retrieves a published essay by its ID.
+// GetEssayByID retrieves an essay by its ID.
 func (s *EssayService) GetEssayByID(id uint8) (*models.Essay, error) {
 	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE id = $1`
 	row := s.DB.QueryRow(query, id)
@@ -78,8 +78,8 @@ func (s *EssayService) GetEssayByID(id uint8) (*models.Essay, error) {
 	return &essay, nil
 }
 
-// GetPublishedEssayByID retrieves a published essay by its ID.
-func (s *EssayService) GetPublishedEssayByID(id uint8) (*models.PublishedEssay, error) {
+// GetUserEssayByID retrieves an essay by its ID.
+func (s *EssayService) GetDetailedEssayByID(id uint8) (*models.DetailedEssay, error) {
 	query := `
     SELECT 
         e.id, e.essay_text, 
@@ -100,9 +100,9 @@ func (s *EssayService) GetPublishedEssayByID(id uint8) (*models.PublishedEssay, 
     LEFT JOIN 
         comment c ON c.essay_id = e.id
     LEFT JOIN 
-        "user" cu ON cu.id = c.user_id  -- To get the nickname of the comment author
+        "user" cu ON cu.id = c.user_id
     WHERE 
-        e.id = $1 AND e.is_published = true
+        e.id = $1
     GROUP BY 
         e.id, c.id, u.nickname, cu.nickname
     ORDER BY 
@@ -114,10 +114,10 @@ func (s *EssayService) GetPublishedEssayByID(id uint8) (*models.PublishedEssay, 
 	}
 	defer rows.Close()
 
-	var response models.PublishedEssay
-	var comments []models.PublishedEssayComment
+	var response models.DetailedEssay
+	var comments []models.DetailedEssayComment
 	for rows.Next() {
-		var comment models.PublishedEssayComment
+		var comment models.DetailedEssayComment
 		if err := rows.Scan(
 			&response.ID,
 			&response.EssayText,
@@ -133,7 +133,74 @@ func (s *EssayService) GetPublishedEssayByID(id uint8) (*models.PublishedEssay, 
 			&comment.Nickname,
 		); err != nil {
 			// TODO: нормально обработать случай если нет комментов к сочинению
-			comments = []models.PublishedEssayComment{}
+			comments = []models.DetailedEssayComment{}
+			break
+		}
+	}
+	response.Comments = comments
+
+	if response.ID == 0 {
+		return nil, ErrNoRows
+	}
+	return &response, nil
+}
+
+// GetPublishedEssayByID retrieves a published essay by its ID.
+func (s *EssayService) GetDetailedPublishedEssayByID(id uint8) (*models.DetailedEssay, error) {
+	query := `
+    SELECT 
+        e.id, e.essay_text, 
+        e.updated_at AT TIME ZONE 'UTC' AS updated_at,
+        e.status, e.is_published, e.variant_id, 
+        u.nickname,
+        COUNT(l.user_id) AS likes_count,
+        c.id AS comment_id,
+        c.comment_text AS comment_text,
+        c.created_at AS comment_created_at,
+        cu.nickname AS comment_nickname
+    FROM 
+        essay e
+    JOIN 
+        "user" u ON e.user_id = u.id
+    LEFT JOIN 
+        "like" l ON l.essay_id = e.id
+    LEFT JOIN 
+        comment c ON c.essay_id = e.id
+    LEFT JOIN 
+        "user" cu ON cu.id = c.user_id
+    WHERE 
+        e.id = $1 AND e.is_published = true
+    GROUP BY 
+        e.id, c.id, u.nickname, cu.nickname
+    ORDER BY 
+        c.created_at
+    `
+	rows, err := s.DB.Query(query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var response models.DetailedEssay
+	var comments []models.DetailedEssayComment
+	for rows.Next() {
+		var comment models.DetailedEssayComment
+		if err := rows.Scan(
+			&response.ID,
+			&response.EssayText,
+			&response.UpdatedAt,
+			&response.Status,
+			&response.IsPublished,
+			&response.VariantID,
+			&response.Nickname,
+			&response.Likes,
+			&comment.ID,
+			&comment.CommentText,
+			&comment.CreatedAt,
+			&comment.Nickname,
+		); err != nil {
+			// TODO: нормально обработать случай если нет комментов к сочинению
+			comments = []models.DetailedEssayComment{}
 			break
 		}
 	}
