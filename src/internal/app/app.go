@@ -3,6 +3,7 @@ package app
 import (
 	"essay/src/internal/config"
 	"essay/src/internal/database"
+	"essay/src/internal/middleware"
 	"essay/src/internal/services"
 	"essay/src/internal/transport/handlers"
 	"net/http"
@@ -48,7 +49,7 @@ func (a *App) Close() {
 	a.DB.Close()
 }
 
-func (a *App) ServeMux() *http.ServeMux {
+func (a *App) ServeMux() http.Handler {
 	config.InitSessionStore()
 	mux := http.NewServeMux()
 
@@ -56,5 +57,15 @@ func (a *App) ServeMux() *http.ServeMux {
 	a.EssayHandler.RegisterRoutes(mux)
 	a.ContentHandler.RegisterRoutes(mux)
 
-	return mux
+	// Настройка CORS
+	corsConfig := middleware.CORSConfig{
+		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           3600,
+	}
+
+	return middleware.NewCORSMiddleware(corsConfig)(mux)
 }
