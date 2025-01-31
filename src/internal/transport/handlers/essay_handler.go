@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"log"
@@ -28,6 +29,7 @@ func (h *EssayHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/essays/", h.HandleEssayRequests)
 	mux.HandleFunc("/essays/appeal", h.GetAppealEssays)
 	mux.HandleFunc("/users/me/essays", h.GetUserEssays)
+	mux.HandleFunc("/users/me/essays/", h.GetUserEssayByID)
 }
 
 // HandleEssaysRequests handles various methods on essays.
@@ -128,40 +130,48 @@ func (h *EssayHandler) GetEssayByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var essay interface{}
+	essay, err := h.EssayService.GetDetailedEssayByID(uint8(id))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "Essay not found", http.StatusNotFound)
+		} else {
+			log.Printf("Error GetDetailedEssayByID: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
 
-	session, _ := config.SessionStore.Get(r, "session")
-	userIDInterface, ok := session.Values["user_id"]
-	if ok {
-		if userID := userIDInterface.(uint8); userID != uint8(id) {
-			essay, err = h.EssayService.GetDetailedEssayByID(uint8(id))
-			if err != nil {
-				if errors.Is(err, services.ErrNoRows) {
-					log.Printf("Essay not found: ID %d", id)
-					http.Error(w, "Essay not found", http.StatusNotFound)
-					return
-				}
-				log.Printf("Error retrieving essay: %v", err)
-				http.Error(w, "Failed to retrieve essay", http.StatusInternalServerError)
-				return
-			}
-		}
-	} else {
-		essay, err = h.EssayService.GetDetailedPublishedEssayByID(uint8(id))
-		if err != nil {
-			if errors.Is(err, services.ErrNoRows) {
-				log.Printf("Essay not found: ID %d", id)
-				http.Error(w, "Essay not found", http.StatusNotFound)
-				return
-			}
-			log.Printf("Error retrieving essay: %v", err)
-			http.Error(w, "Failed to retrieve essay", http.StatusInternalServerError)
-			return
-		}
+	// session, _ := config.SessionStore.Get(r, "session")
+	// userIDInterface, ok := session.Values["user_id"]
+	// if ok {
+	// 	userID := userIDInterface.(uint8)
+	// 	if essay.AuthorID != userID && !essay.IsPublished {
+	// 		http.Error(w, "Forbidden", http.StatusForbidden)
+	// 		return
+	// 	}
+	// }
+	if !essay.IsPublished {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	var detailedEssay models.DetailedEssay
+
+	switch essay.Status {
+	case "draft":
+		http.Error(w, "Cannot access a draft", http.StatusBadRequest)
+		return
+	case "saved", "checked", "appeal", "appealed":
+		detailedEssay = *essay
+	}
+
+	if essay.IsPublished {
+		detailedEssay.Comments = essay.Comments
+		detailedEssay.Likes = essay.Likes
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(essay)
+	json.NewEncoder(w).Encode(detailedEssay)
 }
 
 // GetUserEssays handles GET /users/me/essays.
@@ -189,6 +199,57 @@ func (h *EssayHandler) GetUserEssays(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(essays)
+}
+
+// GetEssayByID handles GET /users/me/essays/:id.
+func (h *EssayHandler) GetUserEssayByID(w http.ResponseWriter, r *http.Request) {
+	log.Print("GET ", r.URL.Path)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	parts := strings.Split(r.URL.Path, "/")
+	id, err := strconv.Atoi(parts[4])
+	if err != nil {
+		log.Printf("Invalid essay ID: %v", err)
+		http.Error(w, "Invalid essay ID", http.StatusBadRequest)
+		return
+	}
+
+	essay, err := h.EssayService.GetDetailedEssayByID(uint8(id))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "Essay not found", http.StatusNotFound)
+		} else {
+			log.Printf("Error GetDetailedEssayByID: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	session, _ := config.SessionStore.Get(r, "session")
+	userIDInterface, ok := session.Values["user_id"]
+	if ok {
+		userID := userIDInterface.(uint8)
+		if essay.AuthorID != userID {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+	}
+
+	var detailedEssay models.DetailedEssay
+
+	switch essay.Status {
+	case "draft":
+		http.Error(w, "Cannot access a draft", http.StatusBadRequest)
+		return
+	case "saved", "checked", "appeal", "appealed":
+		detailedEssay = *essay
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(detailedEssay)
 }
 
 // CreateEssay handles POST /essays.
@@ -256,7 +317,7 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 
 	essay, err := h.EssayService.GetEssayByID(uint8(id))
 	if err != nil {
-		if errors.Is(err, services.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
 			http.Error(w, "Failed to find essay", http.StatusBadRequest)
 			return
@@ -327,7 +388,7 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 
 	essay, err := h.EssayService.GetEssayByID(uint8(id))
 	if err != nil {
-		if errors.Is(err, services.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
 			http.Error(w, "Failed to find essay", http.StatusBadRequest)
 			return

@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"essay/src/internal/models"
+	"fmt"
 	"time"
 )
 
 var ErrWrongID = errors.New("wrong id")
-var ErrNoRows = errors.New("query doesn't return a row")
 
 type EssayService struct {
 	DB *sql.DB
@@ -69,147 +69,122 @@ func (s *EssayService) GetEssayByID(id uint8) (*models.Essay, error) {
 
 	var essay models.Essay
 	if err := row.Scan(&essay.ID, &essay.EssayText, &essay.UpdatedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, ErrNoRows
-		}
 		return nil, err
 	}
 
 	return &essay, nil
 }
 
-// GetUserEssayByID retrieves an essay by its ID.
+// GetDetailedEssayByID retrieves an essay by its ID.
 func (s *EssayService) GetDetailedEssayByID(id uint8) (*models.DetailedEssay, error) {
-	query := `
-    SELECT 
-        e.id, e.essay_text, 
-        e.updated_at AT TIME ZONE 'UTC' AS updated_at,
-        e.status, e.is_published, e.variant_id, 
-        u.nickname,
-        COUNT(l.user_id) AS likes_count,
-        c.id AS comment_id,
-        c.comment_text AS comment_text,
-        c.created_at AS comment_created_at,
-        cu.nickname AS comment_nickname
-    FROM 
-        essay e
-    JOIN 
-        "user" u ON e.user_id = u.id
-    LEFT JOIN 
-        "like" l ON l.essay_id = e.id
-    LEFT JOIN 
-        comment c ON c.essay_id = e.id
-    LEFT JOIN 
-        "user" cu ON cu.id = c.user_id
-    WHERE 
-        e.id = $1
-    GROUP BY 
-        e.id, c.id, u.nickname, cu.nickname
-    ORDER BY 
-        c.created_at
-    `
-	rows, err := s.DB.Query(query, id)
+	var essay models.DetailedEssay
+	err := s.DB.QueryRow("SELECT e.id, variant_id, essay_text, updated_at, status, is_published, user_id, nickname FROM essay e JOIN \"user\" u ON e.user_id = u.id WHERE e.id = $1", id).Scan(
+		&essay.ID,
+		&essay.VariantID,
+		&essay.EssayText,
+		&essay.UpdatedAt,
+		&essay.Status,
+		&essay.IsPublished,
+		&essay.AuthorID,
+		&essay.AuthorNickname,
+	)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var response models.DetailedEssay
-	var comments []models.DetailedEssayComment
-	for rows.Next() {
-		var comment models.DetailedEssayComment
-		if err := rows.Scan(
-			&response.ID,
-			&response.EssayText,
-			&response.UpdatedAt,
-			&response.Status,
-			&response.IsPublished,
-			&response.VariantID,
-			&response.Nickname,
-			&response.Likes,
-			&comment.ID,
-			&comment.CommentText,
-			&comment.CreatedAt,
-			&comment.Nickname,
-		); err != nil {
-			// TODO: нормально обработать случай если нет комментов к сочинению
-			comments = []models.DetailedEssayComment{}
-			break
-		}
-	}
-	response.Comments = comments
-
-	if response.ID == 0 {
-		return nil, ErrNoRows
-	}
-	return &response, nil
-}
-
-// GetPublishedEssayByID retrieves a published essay by its ID.
-func (s *EssayService) GetDetailedPublishedEssayByID(id uint8) (*models.DetailedEssay, error) {
-	query := `
-    SELECT 
-        e.id, e.essay_text, 
-        e.updated_at AT TIME ZONE 'UTC' AS updated_at,
-        e.status, e.is_published, e.variant_id, 
-        u.nickname,
-        COUNT(l.user_id) AS likes_count,
-        c.id AS comment_id,
-        c.comment_text AS comment_text,
-        c.created_at AS comment_created_at,
-        cu.nickname AS comment_nickname
-    FROM 
-        essay e
-    JOIN 
-        "user" u ON e.user_id = u.id
-    LEFT JOIN 
-        "like" l ON l.essay_id = e.id
-    LEFT JOIN 
-        comment c ON c.essay_id = e.id
-    LEFT JOIN 
-        "user" cu ON cu.id = c.user_id
-    WHERE 
-        e.id = $1 AND e.is_published = true
-    GROUP BY 
-        e.id, c.id, u.nickname, cu.nickname
-    ORDER BY 
-        c.created_at
-    `
-	rows, err := s.DB.Query(query, id)
+	var variant models.Variant
+	err = s.DB.QueryRow("SELECT variant_title, variant_text FROM variant WHERE id = $1", essay.VariantID).Scan(
+		&variant.VariantTitle,
+		&variant.VariantText,
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("variant fetching error: %w", err)
+	}
+	essay.VariantTitle = variant.VariantTitle
+	essay.VariantText = variant.VariantText
+
+	err = s.DB.QueryRow("SELECT COUNT(*) FROM \"like\" WHERE essay_id = $1", essay.ID).Scan(&essay.Likes)
+	if err != nil {
+		return nil, fmt.Errorf("like fetching error: %w", err)
+	}
+
+	rows, err := s.DB.Query("SELECT c.id, u.nickname, comment_text, created_at FROM comment c JOIN \"user\" u ON c.user_id = u.id WHERE essay_id = $1 ORDER BY created_at DESC", essay.ID)
+	if err != nil {
+		return nil, fmt.Errorf("comment fetching error: %w", err)
 	}
 	defer rows.Close()
-
-	var response models.DetailedEssay
 	var comments []models.DetailedEssayComment
 	for rows.Next() {
 		var comment models.DetailedEssayComment
-		if err := rows.Scan(
-			&response.ID,
-			&response.EssayText,
-			&response.UpdatedAt,
-			&response.Status,
-			&response.IsPublished,
-			&response.VariantID,
-			&response.Nickname,
-			&response.Likes,
-			&comment.ID,
-			&comment.CommentText,
-			&comment.CreatedAt,
-			&comment.Nickname,
-		); err != nil {
-			// TODO: нормально обработать случай если нет комментов к сочинению
-			comments = []models.DetailedEssayComment{}
-			break
+		err := rows.Scan(&comment.ID, &comment.AuthorNickname, &comment.CommentText, &comment.CreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("comment scanning error: %w", err)
 		}
+		comments = append(comments, comment)
 	}
-	response.Comments = comments
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("comment iterating error: %w", err)
+	}
+	essay.Comments = comments
 
-	if response.ID == 0 {
-		return nil, ErrNoRows
+	query := `
+	SELECT 
+		COALESCE(SUM(CASE WHEN rc.criteria_id = 1 THEN rc.score ELSE 0 END), 0) AS K1_score,
+		COALESCE(SUM(CASE WHEN rc.criteria_id = 2 THEN rc.score ELSE 0 END), 0) AS K2_score,
+		COALESCE(SUM(CASE WHEN rc.criteria_id = 3 THEN rc.score ELSE 0 END), 0) AS K3_score,
+		COALESCE(SUM(CASE WHEN rc.criteria_id = 4 THEN rc.score ELSE 0 END), 0) AS K4_score,
+		COALESCE(SUM(CASE WHEN rc.criteria_id = 5 THEN rc.score ELSE 0 END), 0) AS K5_score,
+		COALESCE(SUM(CASE WHEN rc.criteria_id = 6 THEN rc.score ELSE 0 END), 0) AS K6_score,
+		COALESCE(SUM(CASE WHEN rc.criteria_id = 7 THEN rc.score ELSE 0 END), 0) AS K7_score,
+		COALESCE(SUM(CASE WHEN rc.criteria_id = 8 THEN rc.score ELSE 0 END), 0) AS K8_score,
+		COALESCE(SUM(CASE WHEN rc.criteria_id = 9 THEN rc.score ELSE 0 END), 0) AS K9_score,
+		COALESCE(SUM(CASE WHEN rc.criteria_id = 10 THEN rc.score ELSE 0 END), 0) AS K10_score,
+		SUM(rc.score) AS Score
+	FROM 
+		result r
+	LEFT JOIN 
+		result_criteria rc ON r.id = rc.result_id
+	WHERE 
+		r.essay_id = $1
+	GROUP BY 
+		r.id
+	`
+
+	rows, err = s.DB.Query(query, essay.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %w", err)
 	}
-	return &response, nil
+	defer rows.Close()
+
+	var detailedResults []models.DetailedResult
+	for rows.Next() {
+		var result models.DetailedResult
+		err := rows.Scan(
+			&result.K1_score,
+			&result.K2_score,
+			&result.K3_score,
+			&result.K4_score,
+			&result.K5_score,
+			&result.K6_score,
+			&result.K7_score,
+			&result.K8_score,
+			&result.K9_score,
+			&result.K10_score,
+			&result.Score,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning results: %w", err)
+		}
+		detailedResults = append(detailedResults, result)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating results: %w", err)
+	}
+
+	essay.Results = detailedResults
+
+	return &essay, nil
 }
 
 // GetUserEssays retrieves all essays for a specific user.

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"essay/src/internal/config"
@@ -37,7 +38,7 @@ func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
 
 	_, err = h.EssayService.GetEssayByID(uint8(id))
 	if err != nil {
-		if errors.Is(err, services.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
 			http.Error(w, "Failed to find essay", http.StatusBadRequest)
 			return
@@ -94,7 +95,7 @@ func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) 
 
 	_, err = h.EssayService.GetEssayByID(uint8(id))
 	if err != nil {
-		if errors.Is(err, services.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
 			http.Error(w, "Failed to find essay", http.StatusBadRequest)
 			return
