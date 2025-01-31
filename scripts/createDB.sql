@@ -11,6 +11,7 @@ CREATE TABLE "user" (
 
 CREATE TABLE variant (
     id SERIAL PRIMARY KEY,
+    variant_title TEXT,
     variant_text TEXT,
     author_position TEXT
 );
