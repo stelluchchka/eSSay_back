@@ -19,7 +19,7 @@ CREATE TABLE variant (
 CREATE TABLE essay (
     id SERIAL PRIMARY KEY,
     essay_text TEXT,
-    updated_at TIMESTAMP,
+    completed_at TIMESTAMP,
     status STATUS,
     is_published BOOLEAN DEFAULT FALSE,
     user_id INTEGER,

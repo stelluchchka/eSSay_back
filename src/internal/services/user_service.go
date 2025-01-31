@@ -43,6 +43,19 @@ func (s *UserService) GetUserByID(id int) (*models.User, error) {
 	return user, nil
 }
 
+func (s *UserService) GetUsersCount() (int, error) {
+	var count int
+
+	query := `SELECT COUNT(*) FROM "user"`
+	err := s.DB.QueryRow(query).Scan(&count)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (s *UserService) CreateUser(user *models.User) error {
 	hashedPassword := hashPassword(user.Password)
 

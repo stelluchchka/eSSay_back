@@ -14,7 +14,7 @@ type User struct {
 type Essay struct {
 	ID          uint8     `json:"id"`
 	EssayText   string    `json:"essay_text"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	CompletedAt time.Time `json:"completed_at"`
 	Status      string    `json:"status"`
 	IsPublished bool      `json:"is_published"`
 	UserID      uint8     `json:"user_id"`
@@ -65,7 +65,7 @@ type DetailedEssay struct {
 	VariantTitle   string                 `json:"variant_title"`
 	VariantText    string                 `json:"variant_text"`
 	EssayText      string                 `json:"essay_text"`
-	UpdatedAt      time.Time              `json:"updated_at"`
+	CompletedAt    time.Time              `json:"completed_at"`
 	Status         string                 `json:"status"`
 	IsPublished    bool                   `json:"is_published"`
 	AuthorID       uint8                  `json:"author_id"`
@@ -80,7 +80,7 @@ type AppealEssay struct {
 	VariantID    uint8            `json:"variant_id"`
 	VariantTitle string           `json:"variant_title"`
 	EssayText    string           `json:"essay_text"`
-	UpdatedAt    time.Time        `json:"updated_at"`
+	CompletedAt  time.Time        `json:"completed_at"`
 	Status       string           `json:"status"`
 	Results      []DetailedResult `json:"results"`
 }
@@ -93,15 +93,16 @@ type DetailedEssayComment struct {
 }
 
 type DetailedResult struct {
-	K1_score  int
-	K2_score  int
-	K3_score  int
-	K4_score  int
-	K5_score  int
-	K6_score  int
-	K7_score  int
-	K8_score  int
-	K9_score  int
-	K10_score int
-	Score     int
+	K1_score   int
+	K2_score   int
+	K3_score   int
+	K4_score   int
+	K5_score   int
+	K6_score   int
+	K7_score   int
+	K8_score   int
+	K9_score   int
+	K10_score  int
+	Score      int
+	AppealText string
 }

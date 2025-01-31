@@ -84,7 +84,7 @@ VALUES
 ('Variant text 3', 'Variant title 3', 'Author Position 3');
 
 -- Добавление эссе
-INSERT INTO essay (essay_text, updated_at, status, is_published, user_id, variant_id)
+INSERT INTO essay (essay_text, completed_at, status, is_published, user_id, variant_id)
 VALUES
 ('Essay text 1', '2025-01-01 10:00:00', 'draft', FALSE, 1, 1),
 ('Essay text 2', '2025-01-02 11:00:00', 'saved', TRUE, 2, 2),

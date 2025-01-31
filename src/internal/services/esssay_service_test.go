@@ -18,13 +18,13 @@ func TestEssayService_GetPublishedEssays(t *testing.T) {
 	service := NewEssayService(db)
 
 	expectedEssays := []models.Essay{
-		{ID: 1, EssayText: "Essay 1", UpdatedAt: time.Now(), Status: "published", IsPublished: true, UserID: 1, VariantID: 1},
-		{ID: 2, EssayText: "Essay 2", UpdatedAt: time.Now(), Status: "published", IsPublished: true, UserID: 2, VariantID: 2},
+		{ID: 1, EssayText: "Essay 1", CompletedAt: time.Now(), Status: "published", IsPublished: true, UserID: 1, VariantID: 1},
+		{ID: 2, EssayText: "Essay 2", CompletedAt: time.Now(), Status: "published", IsPublished: true, UserID: 2, VariantID: 2},
 	}
 
 	rows := sqlmock.NewRows([]string{"id", "essay_text", "updated_at", "status", "is_published", "user_id", "variant_id"}).
-		AddRow(expectedEssays[0].ID, expectedEssays[0].EssayText, expectedEssays[0].UpdatedAt, expectedEssays[0].Status, expectedEssays[0].IsPublished, expectedEssays[0].UserID, expectedEssays[0].VariantID).
-		AddRow(expectedEssays[1].ID, expectedEssays[1].EssayText, expectedEssays[1].UpdatedAt, expectedEssays[1].Status, expectedEssays[1].IsPublished, expectedEssays[1].UserID, expectedEssays[1].VariantID)
+		AddRow(expectedEssays[0].ID, expectedEssays[0].EssayText, expectedEssays[0].CompletedAt, expectedEssays[0].Status, expectedEssays[0].IsPublished, expectedEssays[0].UserID, expectedEssays[0].VariantID).
+		AddRow(expectedEssays[1].ID, expectedEssays[1].EssayText, expectedEssays[1].CompletedAt, expectedEssays[1].Status, expectedEssays[1].IsPublished, expectedEssays[1].UserID, expectedEssays[1].VariantID)
 
 	mock.ExpectQuery(`SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE is_published = true`).
 		WillReturnRows(rows)
@@ -59,11 +59,11 @@ func TestEssayService_GetAppealEssays(t *testing.T) {
 	service := NewEssayService(db)
 
 	expectedEssays := []models.Essay{
-		{ID: 1, EssayText: "Appeal Essay 1", UpdatedAt: time.Now(), Status: "appeal", IsPublished: false, UserID: 1, VariantID: 1},
+		{ID: 1, EssayText: "Appeal Essay 1", CompletedAt: time.Now(), Status: "appeal", IsPublished: false, UserID: 1, VariantID: 1},
 	}
 
 	rows := sqlmock.NewRows([]string{"id", "essay_text", "updated_at", "status", "is_published", "user_id", "variant_id"}).
-		AddRow(expectedEssays[0].ID, expectedEssays[0].EssayText, expectedEssays[0].UpdatedAt, expectedEssays[0].Status, expectedEssays[0].IsPublished, expectedEssays[0].UserID, expectedEssays[0].VariantID)
+		AddRow(expectedEssays[0].ID, expectedEssays[0].EssayText, expectedEssays[0].CompletedAt, expectedEssays[0].Status, expectedEssays[0].IsPublished, expectedEssays[0].UserID, expectedEssays[0].VariantID)
 
 	mock.ExpectQuery(`SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE status = 'appeal'`).
 		WillReturnRows(rows)
@@ -83,13 +83,13 @@ func TestEssayService_GetUserEssays(t *testing.T) {
 	userID := uint8(1)
 
 	expectedEssays := []models.Essay{
-		{ID: 1, EssayText: "User Essay 1", UpdatedAt: time.Now(), Status: "draft", IsPublished: false, UserID: userID, VariantID: 1},
-		{ID: 2, EssayText: "User Essay 2", UpdatedAt: time.Now(), Status: "published", IsPublished: true, UserID: userID, VariantID: 2},
+		{ID: 1, EssayText: "User Essay 1", CompletedAt: time.Now(), Status: "draft", IsPublished: false, UserID: userID, VariantID: 1},
+		{ID: 2, EssayText: "User Essay 2", CompletedAt: time.Now(), Status: "published", IsPublished: true, UserID: userID, VariantID: 2},
 	}
 
 	rows := sqlmock.NewRows([]string{"id", "essay_text", "updated_at", "status", "is_published", "user_id", "variant_id"}).
-		AddRow(expectedEssays[0].ID, expectedEssays[0].EssayText, expectedEssays[0].UpdatedAt, expectedEssays[0].Status, expectedEssays[0].IsPublished, expectedEssays[0].UserID, expectedEssays[0].VariantID).
-		AddRow(expectedEssays[1].ID, expectedEssays[1].EssayText, expectedEssays[1].UpdatedAt, expectedEssays[1].Status, expectedEssays[1].IsPublished, expectedEssays[1].UserID, expectedEssays[1].VariantID)
+		AddRow(expectedEssays[0].ID, expectedEssays[0].EssayText, expectedEssays[0].CompletedAt, expectedEssays[0].Status, expectedEssays[0].IsPublished, expectedEssays[0].UserID, expectedEssays[0].VariantID).
+		AddRow(expectedEssays[1].ID, expectedEssays[1].EssayText, expectedEssays[1].CompletedAt, expectedEssays[1].Status, expectedEssays[1].IsPublished, expectedEssays[1].UserID, expectedEssays[1].VariantID)
 
 	mock.ExpectQuery(`SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE user_id = \$1`).
 		WithArgs(userID).
@@ -112,7 +112,7 @@ func TestEssayService_GetEssayByID_Success(t *testing.T) {
 	expectedEssay := models.Essay{
 		ID:          id,
 		EssayText:   "Sample Essay",
-		UpdatedAt:   time.Now(),
+		CompletedAt: time.Now(),
 		Status:      "draft",
 		IsPublished: false,
 		UserID:      1,
@@ -122,7 +122,7 @@ func TestEssayService_GetEssayByID_Success(t *testing.T) {
 	mock.ExpectQuery(`SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE id = \$1`).
 		WithArgs(id).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "essay_text", "updated_at", "status", "is_published", "user_id", "variant_id"}).
-			AddRow(expectedEssay.ID, expectedEssay.EssayText, expectedEssay.UpdatedAt, expectedEssay.Status, expectedEssay.IsPublished, expectedEssay.UserID, expectedEssay.VariantID))
+			AddRow(expectedEssay.ID, expectedEssay.EssayText, expectedEssay.CompletedAt, expectedEssay.Status, expectedEssay.IsPublished, expectedEssay.UserID, expectedEssay.VariantID))
 
 	essay, err := service.GetEssayByID(id)
 
@@ -206,7 +206,7 @@ func TestEssayService_GetEssayByID_NoRows(t *testing.T) {
 // 		VariantTitle:   "variant_title",
 // 		VariantText:    "variant_text",
 // 		EssayText:      "Sample Essay",
-// 		UpdatedAt:      time.Now(),
+// 		CompletedAt:      time.Now(),
 // 		Status:         "draft",
 // 		IsPublished:    true,
 // 		AuthorID:       ID,

@@ -32,7 +32,7 @@ func (s *EssayService) GetPublishedEssays() ([]models.Essay, error) {
 	essays := []models.Essay{}
 	for rows.Next() {
 		var essay models.Essay
-		if err := rows.Scan(&essay.ID, &essay.EssayText, &essay.UpdatedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
+		if err := rows.Scan(&essay.ID, &essay.EssayText, &essay.CompletedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
 			return nil, err
 		}
 		essays = append(essays, essay)
@@ -53,7 +53,7 @@ func (s *EssayService) GetAppealEssays() ([]models.Essay, error) {
 	essays := []models.Essay{}
 	for rows.Next() {
 		var essay models.Essay
-		if err := rows.Scan(&essay.ID, &essay.EssayText, &essay.UpdatedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
+		if err := rows.Scan(&essay.ID, &essay.EssayText, &essay.CompletedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
 			return nil, err
 		}
 		essays = append(essays, essay)
@@ -68,7 +68,7 @@ func (s *EssayService) GetEssayByID(id uint8) (*models.Essay, error) {
 	row := s.DB.QueryRow(query, id)
 
 	var essay models.Essay
-	if err := row.Scan(&essay.ID, &essay.EssayText, &essay.UpdatedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
+	if err := row.Scan(&essay.ID, &essay.EssayText, &essay.CompletedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
 		return nil, err
 	}
 
@@ -82,7 +82,7 @@ func (s *EssayService) GetDetailedEssayByID(id uint8) (*models.DetailedEssay, er
 		&essay.ID,
 		&essay.VariantID,
 		&essay.EssayText,
-		&essay.UpdatedAt,
+		&essay.CompletedAt,
 		&essay.Status,
 		&essay.IsPublished,
 		&essay.AuthorID,
@@ -199,7 +199,7 @@ func (s *EssayService) GetUserEssays(userID uint8) ([]models.Essay, error) {
 	essays := []models.Essay{}
 	for rows.Next() {
 		var essay models.Essay
-		if err := rows.Scan(&essay.ID, &essay.EssayText, &essay.UpdatedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
+		if err := rows.Scan(&essay.ID, &essay.EssayText, &essay.CompletedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
 			return nil, err
 		}
 		essays = append(essays, essay)

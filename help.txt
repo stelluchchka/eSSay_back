@@ -7,6 +7,10 @@ select * from "like"
 select * from comment
 
 
+go test -cover ./src/internal/services -coverprofile=coverage.out
+go tool cover -html=coverage.out 
+
+
 
 go run src/cmd/app/main.go
 

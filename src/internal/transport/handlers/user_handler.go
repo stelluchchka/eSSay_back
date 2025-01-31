@@ -28,6 +28,7 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/users/logout", h.HandleLogout)
 	mux.HandleFunc("/users/", h.HandleUsers)
 	mux.HandleFunc("/users", h.HandleCreateUser)
+	mux.HandleFunc("/users/count", h.GetUsersCount)
 }
 
 func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -145,10 +146,31 @@ func (h *UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Email already in use", http.StatusBadRequest)
 			return
 		}
+		log.Print("Error creating user: ", err)
 		http.Error(w, "Error creating user", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "User created successfully")
+}
+
+func (h *UserHandler) GetUsersCount(w http.ResponseWriter, r *http.Request) {
+	log.Println("GET ", r.URL.Path)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	count, err := h.UserService.GetUsersCount()
+	if err != nil {
+		log.Print("Error getting users count: ", err)
+		http.Error(w, "0", http.StatusInternalServerError)
+		return
+	}
+	log.Print("Get users count: ", count)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int{
+		"count": count,
+	})
 }
