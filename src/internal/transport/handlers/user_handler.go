@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"essay/src/internal/config"
@@ -52,6 +53,11 @@ func (h *UserHandler) GetNickname(w http.ResponseWriter, r *http.Request) {
 
 	nickname, err := h.UserService.GetNickname(data.Mail)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Print("User is not registered")
+			http.Error(w, "User is not registered", http.StatusNotFound)
+			return
+		}
 		log.Print("Error getting nickname: ", err)
 		http.Error(w, "Error getting nickname", http.StatusInternalServerError)
 		return
