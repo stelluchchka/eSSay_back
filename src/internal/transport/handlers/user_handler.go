@@ -40,18 +40,14 @@ func (h *UserHandler) GetNickname(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var data struct {
-		Mail string `json:"mail"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&data)
-	if err != nil {
-		log.Printf("Error decoding request: %v\n", err)
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+	mail := r.URL.Query().Get("mail")
+	if mail == "" {
+		log.Print("Mail parameter is missing")
+		http.Error(w, "Mail parameter is missing", http.StatusBadRequest)
 		return
 	}
 
-	nickname, err := h.UserService.GetNickname(data.Mail)
+	nickname, err := h.UserService.GetNickname(mail)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Print("User is not registered")
@@ -62,6 +58,7 @@ func (h *UserHandler) GetNickname(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error getting nickname", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"nickname": nickname,
