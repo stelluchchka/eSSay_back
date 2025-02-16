@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type ContentHandler struct {
@@ -26,6 +27,8 @@ func NewContentHandler(contentService *services.ContentService, essayService *se
 func (h *ContentHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/likes/", h.HandleLikes)
 	mux.HandleFunc("/comments/", h.HandleComments)
+	mux.HandleFunc("/variants/count", h.GetVariantsCount)
+	mux.HandleFunc("/variants/", h.GetVariant)
 }
 
 func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
@@ -142,4 +145,52 @@ func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) 
 	default:
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+// GetVariantsCount handles GET /variants/count
+func (h *ContentHandler) GetVariantsCount(w http.ResponseWriter, r *http.Request) {
+	log.Println("GET ", r.URL.Path)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	count, err := h.ContentService.GetVariantsCount()
+	if err != nil {
+		log.Print("Error getting variants count: ", err)
+		http.Error(w, "Error getting variants count", http.StatusInternalServerError)
+		return
+	}
+	log.Print("Variants count: ", count)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int{
+		"variants_count": count,
+	})
+}
+
+// GetVariant handles GET /variants/id
+func (h *ContentHandler) GetVariant(w http.ResponseWriter, r *http.Request) {
+	log.Println("GET ", r.URL.Path)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	parts := strings.Split(r.URL.Path, "/")
+	id, err := strconv.Atoi(parts[2])
+	if err != nil {
+		log.Printf("Invalid variant ID: %v", err)
+		http.Error(w, "Invalid variant ID", http.StatusBadRequest)
+		return
+	}
+
+	variant, err := h.ContentService.GetVariantByID(uint8(id))
+	if err != nil {
+		log.Print("Error getting variant: ", err)
+		http.Error(w, "Error getting variant:", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(variant)
 }

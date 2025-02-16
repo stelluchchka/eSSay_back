@@ -57,7 +57,6 @@ func (a *App) ServeMux() http.Handler {
 	a.EssayHandler.RegisterRoutes(mux)
 	a.ContentHandler.RegisterRoutes(mux)
 
-	// Настройка CORS
 	corsConfig := middleware.CORSConfig{
 		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},

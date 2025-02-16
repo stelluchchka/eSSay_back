@@ -18,6 +18,32 @@ func NewContentService(db *sql.DB) *ContentService {
 	}
 }
 
+func (s *ContentService) GetVariantsCount() (int, error) {
+	var count int
+
+	query := `SELECT COUNT(*) FROM variant`
+	err := s.DB.QueryRow(query).Scan(&count)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *ContentService) GetVariantByID(variantID uint8) (models.Variant, error) {
+	var variant models.Variant
+
+	query := `SELECT id, variant_title, variant_text FROM variant WHERE id = $1`
+	err := s.DB.QueryRow(query, variantID).Scan(&variant.ID, &variant.VariantTitle, &variant.VariantText)
+
+	if err != nil {
+		return variant, err
+	}
+
+	return variant, nil
+}
+
 func (s *ContentService) GetLikesCount(essayID uint8) (int, error) {
 	var count int
 	query := `SELECT COUNT(*) FROM "like" WHERE essay_id = $1`

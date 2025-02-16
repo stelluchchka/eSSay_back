@@ -20,6 +20,20 @@ func NewEssayService(db *sql.DB) *EssayService {
 	}
 }
 
+// GetPublishedEssaysCount retrieves all published essays.
+func (s *EssayService) GetEssaysCount() (int, error) {
+	var count int
+
+	query := `SELECT COUNT(*) FROM essay WHERE is_published = true`
+	err := s.DB.QueryRow(query).Scan(&count)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // GetPublishedEssays retrieves all published essays.
 func (s *EssayService) GetPublishedEssays() ([]models.Essay, error) {
 	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE is_published = true`

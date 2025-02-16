@@ -24,11 +24,42 @@ func NewUserHandler(userService *services.UserService) *UserHandler {
 }
 
 func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/users/nickname", h.GetNickname)
 	mux.HandleFunc("/users/login", h.HandleLogin)
 	mux.HandleFunc("/users/logout", h.HandleLogout)
 	mux.HandleFunc("/users/", h.HandleUsers)
 	mux.HandleFunc("/users", h.HandleCreateUser)
 	mux.HandleFunc("/users/count", h.GetUsersCount)
+}
+
+func (h *UserHandler) GetNickname(w http.ResponseWriter, r *http.Request) {
+	log.Println("GET ", r.URL.Path)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var data struct {
+		Mail string `json:"mail"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		log.Printf("Error decoding request: %v\n", err)
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	nickname, err := h.UserService.GetNickname(data.Mail)
+	if err != nil {
+		log.Print("Error getting nickname: ", err)
+		http.Error(w, "Error getting nickname", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"nickname": nickname,
+	})
 }
 
 func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -165,12 +196,12 @@ func (h *UserHandler) GetUsersCount(w http.ResponseWriter, r *http.Request) {
 	count, err := h.UserService.GetUsersCount()
 	if err != nil {
 		log.Print("Error getting users count: ", err)
-		http.Error(w, "0", http.StatusInternalServerError)
+		http.Error(w, "Error getting users count", http.StatusInternalServerError)
 		return
 	}
-	log.Print("Get users count: ", count)
+	log.Print("Users count: ", count)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]int{
-		"count": count,
+		"users_count": count,
 	})
 }

@@ -56,6 +56,19 @@ func (s *UserService) GetUsersCount() (int, error) {
 	return count, nil
 }
 
+func (s *UserService) GetNickname(mail string) (string, error) {
+	var nickname string
+
+	query := `SELECT nickname FROM "user" WHERE mail = $1`
+	err := s.DB.QueryRow(query, mail).Scan(&nickname)
+
+	if err != nil {
+		return "", err
+	}
+
+	return nickname, nil
+}
+
 func (s *UserService) CreateUser(user *models.User) error {
 	hashedPassword := hashPassword(user.Password)
 
