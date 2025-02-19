@@ -20,7 +20,7 @@ func NewEssayService(db *sql.DB) *EssayService {
 	}
 }
 
-// GetPublishedEssaysCount retrieves all published essays.
+// GetPublishedEssaysCount retrieves essays count.
 func (s *EssayService) GetEssaysCount() (int, error) {
 	var count int
 
@@ -35,21 +35,36 @@ func (s *EssayService) GetEssaysCount() (int, error) {
 }
 
 // GetPublishedEssays retrieves all published essays.
-func (s *EssayService) GetPublishedEssays() ([]models.Essay, error) {
-	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE is_published = true`
+func (s *EssayService) GetPublishedEssays() ([]models.EssayCard, error) {
+	query := `
+		SELECT 
+			e.id, e.variant_id, v.variant_title, u.nickname AS author_nickname, 
+			COALESCE(COUNT(l.user_id), 0) AS likes, 
+			COALESCE(r.sum_score, 0) AS score
+		FROM essay e
+		JOIN variant v ON e.variant_id = v.id
+		JOIN "user" u ON e.user_id = u.id
+		LEFT JOIN "like" l ON e.id = l.essay_id
+		LEFT JOIN result r ON e.id = r.essay_id
+		WHERE e.is_published = true
+		GROUP BY e.id, e.variant_id, v.variant_title, u.nickname, r.sum_score
+    `
 	rows, err := s.DB.Query(query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	essays := []models.Essay{}
+	essays := []models.EssayCard{}
 	for rows.Next() {
-		var essay models.Essay
-		if err := rows.Scan(&essay.ID, &essay.EssayText, &essay.CompletedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
+		var essayCard models.EssayCard
+		if err := rows.Scan(
+			&essayCard.ID, &essayCard.VariantID, &essayCard.VariantTitle, &essayCard.AuthorNickname,
+			&essayCard.Likes, &essayCard.Score,
+		); err != nil {
 			return nil, err
 		}
-		essays = append(essays, essay)
+		essays = append(essays, essayCard)
 	}
 
 	return essays, nil
@@ -89,7 +104,7 @@ func (s *EssayService) GetEssayByID(id uint64) (*models.Essay, error) {
 	return &essay, nil
 }
 
-// GetDetailedEssayByID retrieves an essay by its ID.
+// GetDetailedEssayByID retrieves detailed essay by its ID.
 func (s *EssayService) GetDetailedEssayByID(id uint64) (*models.DetailedEssay, error) {
 	var essay models.DetailedEssay
 	err := s.DB.QueryRow("SELECT e.id, variant_id, essay_text, updated_at, status, is_published, user_id, nickname FROM essay e JOIN \"user\" u ON e.user_id = u.id WHERE e.id = $1", id).Scan(

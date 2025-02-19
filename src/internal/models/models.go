@@ -59,6 +59,15 @@ type ResultCriteria struct {
 	Score      int    `json:"score"`
 }
 
+type EssayCard struct {
+	ID             uint64 `json:"id"`
+	VariantID      uint64 `json:"variant_id"`
+	VariantTitle   string `json:"variant_title"`
+	AuthorNickname string `json:"author_nickname"`
+	Likes          int    `json:"likes"`
+	Score          int    `json:"score"`
+}
+
 type DetailedEssay struct {
 	ID             uint64                 `json:"id"`
 	VariantID      uint64                 `json:"variant_id"`
