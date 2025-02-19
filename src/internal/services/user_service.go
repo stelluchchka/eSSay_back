@@ -27,11 +27,23 @@ func hashPassword(password string) string {
 	return fmt.Sprintf("%x", hash[:])
 }
 
-func (s *UserService) GetUserByID(id uint64) (*models.User, error) {
-	user := &models.User{}
+func (s *UserService) GetUserByID(id uint64) (*models.UserInfo, error) {
+	user := &models.UserInfo{}
 
-	query := `SELECT "id", "mail", "nickname", "password", "is_moderator", "count_checks" FROM "user" WHERE "id" = $1`
-	err := s.DB.QueryRow(query, id).Scan(&user.ID, &user.Mail, &user.Nickname, &user.Password, &user.IsModerator, &user.CountChecks)
+	query := `SELECT 
+	u.id, u.mail, u.nickname, u.is_moderator, u.count_checks,
+	COUNT(e.id) AS count_essays, 
+	COUNT(CASE WHEN e.is_published THEN 1 END) AS count_published_essays,
+	COALESCE(AVG(r.sum_score), 0) AS average_result
+	FROM "user" u
+	LEFT JOIN essay e ON u.id = e.user_id
+	LEFT JOIN result r ON e.id = r.essay_id
+	WHERE u.id = $1
+	GROUP BY u.id, u.mail, u.nickname, u.is_moderator, u.count_checks`
+
+	err := s.DB.QueryRow(query, id).Scan(
+		&user.ID, &user.Mail, &user.Nickname, &user.IsModerator,
+		&user.CountChecks, &user.CountEssays, &user.CountPublishedEssays, &user.AverageResult)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

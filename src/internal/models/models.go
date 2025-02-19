@@ -106,3 +106,14 @@ type DetailedResult struct {
 	Score      int
 	AppealText string
 }
+
+type UserInfo struct {
+	ID                   uint64  `json:"id"`
+	Mail                 string  `json:"mail"`
+	Nickname             string  `json:"nickname"`
+	IsModerator          bool    `json:"is_moderator"`
+	CountChecks          int     `json:"count_checks"`
+	CountEssays          int     `json:"count_essays"`
+	CountPublishedEssays int     `json:"count_published_essays"`
+	AverageResult        float64 `json:"average_result"`
+}
