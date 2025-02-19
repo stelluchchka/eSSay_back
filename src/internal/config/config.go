@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/gorilla/sessions"
@@ -47,6 +48,8 @@ func InitSessionStore() {
 	SessionStore.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   7 * 24 * 60 * 60, // неделя
-		HttpOnly: true,
+		HttpOnly: false,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
 	}
 }

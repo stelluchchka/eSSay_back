@@ -59,7 +59,7 @@ func (a *App) ServeMux() http.Handler {
 
 	corsConfig := middleware.CORSConfig{
 		AllowedOrigins:   []string{"http://localhost:3000"},
-		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
