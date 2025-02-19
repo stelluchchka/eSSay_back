@@ -3,7 +3,7 @@ package models
 import "time"
 
 type User struct {
-	ID          uint8  `json:"id"`
+	ID          uint64 `json:"id"`
 	Mail        string `json:"mail"`
 	Nickname    string `json:"nickname"`
 	Password    string `json:"password"`
@@ -12,63 +12,63 @@ type User struct {
 }
 
 type Essay struct {
-	ID          uint8     `json:"id"`
+	ID          uint64    `json:"id"`
 	EssayText   string    `json:"essay_text"`
 	CompletedAt time.Time `json:"completed_at"`
 	Status      string    `json:"status"`
 	IsPublished bool      `json:"is_published"`
-	UserID      uint8     `json:"user_id"`
-	VariantID   uint8     `json:"variant_id"`
+	UserID      uint64    `json:"user_id"`
+	VariantID   uint64    `json:"variant_id"`
 }
 
 type Variant struct {
-	ID             uint8  `json:"id"`
+	ID             uint64 `json:"id"`
 	VariantTitle   string `json:"variant_title"`
 	VariantText    string `json:"variant_text"`
 	AuthorPosition string `json:"author_position"`
 }
 
 type Comment struct {
-	ID          uint8     `json:"id"`
-	UserID      uint8     `json:"user_id"`
-	EssayID     uint8     `json:"essay_id"`
+	ID          uint64    `json:"id"`
+	UserID      uint64    `json:"user_id"`
+	EssayID     uint64    `json:"essay_id"`
 	CommentText string    `json:"comment_text"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
 type Like struct {
-	UserID  uint8 `json:"user_id"`
-	EssayID uint8 `json:"essay_id"`
+	UserID  uint64 `json:"user_id"`
+	EssayID uint64 `json:"essay_id"`
 }
 
 type Result struct {
-	ID         uint8  `json:"id"`
+	ID         uint64 `json:"id"`
 	SumScore   int    `json:"sum_score"`
 	AppealText string `json:"appeal_text"`
-	EssayID    uint8  `json:"essay_id"`
+	EssayID    uint64 `json:"essay_id"`
 }
 
 type Criteria struct {
-	ID    uint8  `json:"id"`
+	ID    uint64 `json:"id"`
 	Title string `json:"title"`
 }
 
 type ResultCriteria struct {
-	ResultID   uint8 `json:"result_id"`
-	CriteriaID uint8 `json:"criteria_id"`
-	Score      int   `json:"score"`
+	ResultID   uint64 `json:"result_id"`
+	CriteriaID uint64 `json:"criteria_id"`
+	Score      int    `json:"score"`
 }
 
 type DetailedEssay struct {
-	ID             uint8                  `json:"id"`
-	VariantID      uint8                  `json:"variant_id"`
+	ID             uint64                 `json:"id"`
+	VariantID      uint64                 `json:"variant_id"`
 	VariantTitle   string                 `json:"variant_title"`
 	VariantText    string                 `json:"variant_text"`
 	EssayText      string                 `json:"essay_text"`
 	CompletedAt    time.Time              `json:"completed_at"`
 	Status         string                 `json:"status"`
 	IsPublished    bool                   `json:"is_published"`
-	AuthorID       uint8                  `json:"author_id"`
+	AuthorID       uint64                 `json:"author_id"`
 	AuthorNickname string                 `json:"author_nickname"`
 	Likes          int                    `json:"likes"`
 	Comments       []DetailedEssayComment `json:"comments"`
@@ -76,8 +76,8 @@ type DetailedEssay struct {
 }
 
 type AppealEssay struct {
-	ID           uint8            `json:"id"`
-	VariantID    uint8            `json:"variant_id"`
+	ID           uint64           `json:"id"`
+	VariantID    uint64           `json:"variant_id"`
 	VariantTitle string           `json:"variant_title"`
 	EssayText    string           `json:"essay_text"`
 	CompletedAt  time.Time        `json:"completed_at"`
@@ -86,7 +86,7 @@ type AppealEssay struct {
 }
 
 type DetailedEssayComment struct {
-	ID             uint8     `json:"id"`
+	ID             uint64    `json:"id"`
 	AuthorNickname string    `json:"author_nickname"`
 	CommentText    string    `json:"comment_text"`
 	CreatedAt      time.Time `json:"created_at"`

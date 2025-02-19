@@ -77,7 +77,7 @@ func (s *EssayService) GetAppealEssays() ([]models.Essay, error) {
 }
 
 // GetEssayByID retrieves an essay by its ID.
-func (s *EssayService) GetEssayByID(id uint8) (*models.Essay, error) {
+func (s *EssayService) GetEssayByID(id uint64) (*models.Essay, error) {
 	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE id = $1`
 	row := s.DB.QueryRow(query, id)
 
@@ -90,7 +90,7 @@ func (s *EssayService) GetEssayByID(id uint8) (*models.Essay, error) {
 }
 
 // GetDetailedEssayByID retrieves an essay by its ID.
-func (s *EssayService) GetDetailedEssayByID(id uint8) (*models.DetailedEssay, error) {
+func (s *EssayService) GetDetailedEssayByID(id uint64) (*models.DetailedEssay, error) {
 	var essay models.DetailedEssay
 	err := s.DB.QueryRow("SELECT e.id, variant_id, essay_text, updated_at, status, is_published, user_id, nickname FROM essay e JOIN \"user\" u ON e.user_id = u.id WHERE e.id = $1", id).Scan(
 		&essay.ID,
@@ -202,7 +202,7 @@ func (s *EssayService) GetDetailedEssayByID(id uint8) (*models.DetailedEssay, er
 }
 
 // GetUserEssays retrieves all essays for a specific user.
-func (s *EssayService) GetUserEssays(userID uint8) ([]models.Essay, error) {
+func (s *EssayService) GetUserEssays(userID uint64) ([]models.Essay, error) {
 	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE user_id = $1`
 	rows, err := s.DB.Query(query, userID)
 	if err != nil {
@@ -254,7 +254,7 @@ func (s *EssayService) UpdateEssay(essay *models.Essay) error {
 }
 
 // ChangeEssayStatus updates the status of an essay.
-func (s *EssayService) ChangeEssayStatus(essayID uint8, userID uint8, status string) error {
+func (s *EssayService) ChangeEssayStatus(essayID uint64, userID uint64, status string) error {
 	query := `UPDATE essay SET status = $1 WHERE id = $2 AND user_id = $3`
 	_, err := s.DB.Exec(query, status, essayID, userID)
 	if err != nil {
@@ -264,7 +264,7 @@ func (s *EssayService) ChangeEssayStatus(essayID uint8, userID uint8, status str
 }
 
 // PublishEssay marks an essay as published.
-func (s *EssayService) PublishEssay(essayID uint8, userID uint8) error {
+func (s *EssayService) PublishEssay(essayID uint64, userID uint64) error {
 	query := `UPDATE essay SET is_published = true WHERE id = $1 AND user_id = $2`
 	_, err := s.DB.Exec(query, essayID, userID)
 	if err != nil {

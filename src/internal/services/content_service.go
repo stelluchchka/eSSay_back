@@ -31,7 +31,7 @@ func (s *ContentService) GetVariantsCount() (int, error) {
 	return count, nil
 }
 
-func (s *ContentService) GetVariantByID(variantID uint8) (models.Variant, error) {
+func (s *ContentService) GetVariantByID(variantID uint64) (models.Variant, error) {
 	var variant models.Variant
 
 	query := `SELECT id, variant_title, variant_text FROM variant WHERE id = $1`
@@ -44,7 +44,7 @@ func (s *ContentService) GetVariantByID(variantID uint8) (models.Variant, error)
 	return variant, nil
 }
 
-func (s *ContentService) GetLikesCount(essayID uint8) (int, error) {
+func (s *ContentService) GetLikesCount(essayID uint64) (int, error) {
 	var count int
 	query := `SELECT COUNT(*) FROM "like" WHERE essay_id = $1`
 	err := s.DB.QueryRow(query, essayID).Scan(&count)
@@ -54,7 +54,7 @@ func (s *ContentService) GetLikesCount(essayID uint8) (int, error) {
 	return count, nil
 }
 
-func (s *ContentService) AddLike(userID uint8, essayID uint8) error {
+func (s *ContentService) AddLike(userID uint64, essayID uint64) error {
 	query := `
 		INSERT INTO "like" (user_id, essay_id)
 		VALUES ($1, $2)
@@ -72,7 +72,7 @@ func (s *ContentService) AddLike(userID uint8, essayID uint8) error {
 	return nil
 }
 
-func (s *ContentService) GetComments(essayID uint8) ([]models.Comment, error) {
+func (s *ContentService) GetComments(essayID uint64) ([]models.Comment, error) {
 	query := `SELECT user_id, essay_id, comment_text, created_at FROM comment WHERE essay_id = $1`
 	rows, err := s.DB.Query(query, essayID)
 	if err != nil {
@@ -92,7 +92,7 @@ func (s *ContentService) GetComments(essayID uint8) ([]models.Comment, error) {
 	return comments, nil
 }
 
-func (s *ContentService) AddComment(userID uint8, essayID uint8, text string) error {
+func (s *ContentService) AddComment(userID uint64, essayID uint64, text string) error {
 	query := `INSERT INTO comment (user_id, essay_id, comment_text, created_at) VALUES ($1, $2, $3, NOW())`
 	_, err := s.DB.Exec(query, userID, essayID, text)
 	return err

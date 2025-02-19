@@ -15,7 +15,7 @@ func TestContentService_GetLikesCount(t *testing.T) {
 	defer db.Close()
 
 	service := NewContentService(db)
-	essayID := uint8(1)
+	essayID := uint64(1)
 	expectedCount := 5
 
 	mock.ExpectQuery(`SELECT COUNT\(\*\) FROM "like" WHERE essay_id = \$1`).
@@ -34,8 +34,8 @@ func TestContentService_AddLike_Success(t *testing.T) {
 	defer db.Close()
 
 	service := NewContentService(db)
-	userID := uint8(1)
-	essayID := uint8(1)
+	userID := uint64(1)
+	essayID := uint64(1)
 
 	mock.ExpectQuery(`
 		INSERT INTO "like" \(user_id, essay_id\)
@@ -56,8 +56,8 @@ func TestContentService_AddLike_AlreadyExists(t *testing.T) {
 	defer db.Close()
 
 	service := NewContentService(db)
-	userID := uint8(1)
-	essayID := uint8(1)
+	userID := uint64(1)
+	essayID := uint64(1)
 
 	mock.ExpectQuery(`
 		INSERT INTO "like" \(user_id, essay_id\)
@@ -78,7 +78,7 @@ func TestContentService_GetComments(t *testing.T) {
 	defer db.Close()
 
 	service := NewContentService(db)
-	essayID := uint8(1)
+	essayID := uint64(1)
 
 	expectedComments := []models.Comment{
 		{UserID: 1, EssayID: 1, CommentText: "First comment", CreatedAt: time.Now()},
@@ -105,8 +105,8 @@ func TestContentService_AddComment(t *testing.T) {
 	defer db.Close()
 
 	service := NewContentService(db)
-	userID := uint8(1)
-	essayID := uint8(1)
+	userID := uint64(1)
+	essayID := uint64(1)
 	commentText := "New comment"
 
 	mock.ExpectExec(`INSERT INTO comment \(user_id, essay_id, comment_text, created_at\) VALUES \(\$1, \$2, \$3, NOW\(\)\)`).

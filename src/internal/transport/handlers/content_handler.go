@@ -39,7 +39,7 @@ func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.EssayService.GetEssayByID(uint8(id))
+	_, err = h.EssayService.GetEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
@@ -53,7 +53,7 @@ func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		count, err := h.ContentService.GetLikesCount(uint8(id))
+		count, err := h.ContentService.GetLikesCount(uint64(id))
 		if err != nil {
 			log.Printf("Error fetching likes count: %s", err)
 			http.Error(w, "Error fetching likes count", http.StatusInternalServerError)
@@ -69,9 +69,9 @@ func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-		userID := userIDInterface.(uint8)
+		userID := userIDInterface.(uint64)
 
-		if err := h.ContentService.AddLike(userID, uint8(id)); err != nil {
+		if err := h.ContentService.AddLike(userID, uint64(id)); err != nil {
 			if errors.Is(err, services.ErrLikeAlreadyExists) {
 				log.Print("Error adding like: ", err)
 				http.Error(w, "Error adding like", http.StatusBadRequest)
@@ -96,7 +96,7 @@ func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	_, err = h.EssayService.GetEssayByID(uint8(id))
+	_, err = h.EssayService.GetEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
@@ -110,7 +110,7 @@ func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) 
 
 	switch r.Method {
 	case http.MethodGet:
-		comments, err := h.ContentService.GetComments(uint8(id))
+		comments, err := h.ContentService.GetComments(uint64(id))
 		if err != nil {
 			log.Print("Error fetching comments: ", err)
 			http.Error(w, "Error fetching comments", http.StatusInternalServerError)
@@ -126,7 +126,7 @@ func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-		userID := userIDInterface.(uint8)
+		userID := userIDInterface.(uint64)
 
 		var comment struct {
 			CommentText string `json:"comment_text"`
@@ -135,7 +135,7 @@ func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, "Invalid comment data", http.StatusBadRequest)
 			return
 		}
-		if err := h.ContentService.AddComment(userID, uint8(id), comment.CommentText); err != nil {
+		if err := h.ContentService.AddComment(userID, uint64(id), comment.CommentText); err != nil {
 			http.Error(w, "Error adding comment", http.StatusInternalServerError)
 			return
 		}
@@ -184,7 +184,7 @@ func (h *ContentHandler) GetVariant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	variant, err := h.ContentService.GetVariantByID(uint8(id))
+	variant, err := h.ContentService.GetVariantByID(uint64(id))
 	if err != nil {
 		log.Print("Error getting variant: ", err)
 		http.Error(w, "Error getting variant:", http.StatusInternalServerError)

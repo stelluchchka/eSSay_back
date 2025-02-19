@@ -70,7 +70,7 @@ func TestAuthenticate(t *testing.T) {
 	user, err := userService.Authenticate("test@example.com", "password123")
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
-	assert.Equal(t, uint8(1), user.ID)
+	assert.Equal(t, uint64(1), user.ID)
 
 	// Тест неудачной аутентификации из-за неправильного пароля
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id, password, is_moderator FROM "user" WHERE mail = $1`)).
@@ -111,7 +111,7 @@ func TestGetUserByID(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
-	assert.Equal(t, uint8(1), user.ID)
+	assert.Equal(t, uint64(1), user.ID)
 
 	// Тест случая, когда пользователь не найден
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "id", "mail", "nickname", "password", "is_moderator", "count_checks" FROM "user" WHERE "id" = $1`)).

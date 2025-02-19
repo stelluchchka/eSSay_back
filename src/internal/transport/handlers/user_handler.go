@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
 )
 
 type UserHandler struct {
@@ -28,8 +26,8 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/users/nickname", h.GetNickname)
 	mux.HandleFunc("/users/login", h.HandleLogin)
 	mux.HandleFunc("/users/logout", h.HandleLogout)
-	mux.HandleFunc("/users/", h.HandleUsers)
-	mux.HandleFunc("/users", h.HandleCreateUser)
+	mux.HandleFunc("/users/info", h.HandleUserInfo)
+	mux.HandleFunc("/users", h.CreateUser)
 	mux.HandleFunc("/users/count", h.GetUsersCount)
 }
 
@@ -102,6 +100,7 @@ func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+	log.Print("session: ", session)
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Logged in successfully")
@@ -113,24 +112,21 @@ func (h *UserHandler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	session, _ := config.SessionStore.Get(r, "session")
 	delete(session.Values, "user_id")
 	delete(session.Values, "is_moderator")
+	session.Options.MaxAge = -1
 	session.Save(r, w)
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Logged out successfully")
 }
 
-func (h *UserHandler) HandleUsers(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleUserInfo(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET ", r.URL.Path)
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 {
-		log.Println("User ID not provided in the request URL")
-		http.Error(w, "User ID is required", http.StatusBadRequest)
-		return
-	}
 
-	id, err := strconv.Atoi(parts[2])
-	if err != nil {
-		log.Printf("Invalid user ID: %v\n", err)
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+	session, _ := config.SessionStore.Get(r, "session")
+	id, ok := session.Values["user_id"].(uint64)
+	log.Print("session: ", session)
+	if !ok {
+		log.Printf("Unauthorized")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
@@ -158,7 +154,7 @@ func (h *UserHandler) HandleUsers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("POST ", r.URL.Path)
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)

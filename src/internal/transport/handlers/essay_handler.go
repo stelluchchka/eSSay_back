@@ -131,7 +131,7 @@ func (h *EssayHandler) GetEssayByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	essay, err := h.EssayService.GetDetailedEssayByID(uint8(id))
+	essay, err := h.EssayService.GetDetailedEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, "Essay not found", http.StatusNotFound)
@@ -180,7 +180,7 @@ func (h *EssayHandler) GetUserEssays(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
-	userID := userIDInterface.(uint8)
+	userID := userIDInterface.(uint64)
 
 	essays, err := h.EssayService.GetUserEssays(userID)
 	if err != nil {
@@ -209,7 +209,7 @@ func (h *EssayHandler) GetUserEssayByID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	essay, err := h.EssayService.GetDetailedEssayByID(uint8(id))
+	essay, err := h.EssayService.GetDetailedEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, "Essay not found", http.StatusNotFound)
@@ -223,7 +223,7 @@ func (h *EssayHandler) GetUserEssayByID(w http.ResponseWriter, r *http.Request) 
 	session, _ := config.SessionStore.Get(r, "session")
 	userIDInterface, ok := session.Values["user_id"]
 	if ok {
-		userID := userIDInterface.(uint8)
+		userID := userIDInterface.(uint64)
 		if essay.AuthorID != userID {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
@@ -254,7 +254,7 @@ func (h *EssayHandler) CreateEssay(w http.ResponseWriter, r *http.Request) {
 
 	var reqBody struct {
 		EssayText string `json:"essay_text"`
-		VariantId uint8  `json:"variant_id"`
+		VariantId uint64 `json:"variant_id"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -269,7 +269,7 @@ func (h *EssayHandler) CreateEssay(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
-	userID := userIDInterface.(uint8)
+	userID := userIDInterface.(uint64)
 
 	var essay models.Essay
 	essay.Status = "draft"
@@ -305,9 +305,9 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
-	userID := userIDInterface.(uint8)
+	userID := userIDInterface.(uint64)
 
-	essay, err := h.EssayService.GetEssayByID(uint8(id))
+	essay, err := h.EssayService.GetEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
@@ -333,7 +333,7 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var newEssay models.Essay
-	newEssay.ID = uint8(id)
+	newEssay.ID = uint64(id)
 	newEssay.EssayText = reqBody.EssayText
 	newEssay.UserID = userID
 
@@ -376,9 +376,9 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
-	userID := userIDInterface.(uint8)
+	userID := userIDInterface.(uint64)
 
-	essay, err := h.EssayService.GetEssayByID(uint8(id))
+	essay, err := h.EssayService.GetEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
@@ -416,7 +416,7 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 		// TODO: добавить текст аппеляции
 	case "publish":
 		log.Printf("Publishing essay: ID %d", id)
-		if err := h.EssayService.PublishEssay(uint8(id), userID); err != nil {
+		if err := h.EssayService.PublishEssay(uint64(id), userID); err != nil {
 			log.Printf("Failed to publish essay: %v", err)
 			http.Error(w, "Failed to publish essay", http.StatusInternalServerError)
 			return
@@ -431,7 +431,7 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 	}
 
 	log.Printf("Changing essay status to '%s' for essayID %d for userID %d", status, id, userID)
-	if err := h.EssayService.ChangeEssayStatus(uint8(id), userID, status); err != nil {
+	if err := h.EssayService.ChangeEssayStatus(uint64(id), userID, status); err != nil {
 		log.Printf("Failed to change essay status: %v", err)
 		http.Error(w, "Failed to change essay status", http.StatusInternalServerError)
 		return

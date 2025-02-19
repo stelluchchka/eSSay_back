@@ -27,7 +27,7 @@ func hashPassword(password string) string {
 	return fmt.Sprintf("%x", hash[:])
 }
 
-func (s *UserService) GetUserByID(id int) (*models.User, error) {
+func (s *UserService) GetUserByID(id uint64) (*models.User, error) {
 	user := &models.User{}
 
 	query := `SELECT "id", "mail", "nickname", "password", "is_moderator", "count_checks" FROM "user" WHERE "id" = $1`

@@ -80,7 +80,7 @@ func TestEssayService_GetUserEssays(t *testing.T) {
 	defer db.Close()
 
 	service := NewEssayService(db)
-	userID := uint8(1)
+	userID := uint64(1)
 
 	expectedEssays := []models.Essay{
 		{ID: 1, EssayText: "User Essay 1", CompletedAt: time.Now(), Status: "draft", IsPublished: false, UserID: userID, VariantID: 1},
@@ -107,7 +107,7 @@ func TestEssayService_GetEssayByID_Success(t *testing.T) {
 	defer db.Close()
 
 	service := NewEssayService(db)
-	id := uint8(1)
+	id := uint64(1)
 
 	expectedEssay := models.Essay{
 		ID:          id,
@@ -136,7 +136,7 @@ func TestEssayService_GetEssayByID_NoRows(t *testing.T) {
 	defer db.Close()
 
 	service := NewEssayService(db)
-	id := uint8(1)
+	id := uint64(1)
 
 	mock.ExpectQuery(`SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE id = \$1`).
 		WithArgs(id).
@@ -155,7 +155,7 @@ func TestEssayService_GetEssayByID_NoRows(t *testing.T) {
 // 	defer db.Close()
 
 // 	service := NewEssayService(db)
-// 	essayID := uint8(1)
+// 	essayID := uint64(1)
 
 // 	mock.ExpectQuery(`SELECT * FROM essay e JOIN "user" u ON e.user_id = u.id WHERE e.id = \$1`).
 // 		WithArgs(essayID).
@@ -173,7 +173,7 @@ func TestEssayService_GetEssayByID_NoRows(t *testing.T) {
 // 	defer db.Close()
 
 // 	service := NewEssayService(db)
-// 	ID := uint8(1)
+// 	ID := uint64(1)
 
 // 	expectedComments := []models.DetailedEssayComment{
 // 		{
@@ -299,8 +299,8 @@ func TestEssayService_ChangeEssayStatus(t *testing.T) {
 	defer db.Close()
 
 	service := NewEssayService(db)
-	essayID := uint8(1)
-	userID := uint8(1)
+	essayID := uint64(1)
+	userID := uint64(1)
 	status := "published"
 
 	mock.ExpectExec(`UPDATE essay SET status = \$1 WHERE id = \$2 AND user_id = \$3`).
@@ -318,8 +318,8 @@ func TestEssayService_ChangeEssayStatus_Error(t *testing.T) {
 	defer db.Close()
 
 	service := NewEssayService(db)
-	essayID := uint8(1)
-	userID := uint8(1)
+	essayID := uint64(1)
+	userID := uint64(1)
 	status := "published"
 
 	mock.ExpectExec(`UPDATE essay SET status = \$1 WHERE id = \$2 AND user_id = \$3`).
@@ -384,8 +384,8 @@ func TestEssayService_PublishEssay(t *testing.T) {
 	defer db.Close()
 
 	service := NewEssayService(db)
-	essayID := uint8(1)
-	userID := uint8(1)
+	essayID := uint64(1)
+	userID := uint64(1)
 
 	mock.ExpectExec(`UPDATE essay SET is_published = true WHERE id = \$1 AND user_id = \$2`).
 		WithArgs(essayID, userID).
@@ -402,8 +402,8 @@ func TestEssayService_PublishEssay_Error(t *testing.T) {
 	defer db.Close()
 
 	service := NewEssayService(db)
-	essayID := uint8(1)
-	userID := uint8(1)
+	essayID := uint64(1)
+	userID := uint64(1)
 
 	mock.ExpectExec(`UPDATE essay SET is_published = true WHERE id = \$1 AND user_id = \$2`).
 		WithArgs(essayID, userID).
