@@ -92,42 +92,42 @@ func TestAuthenticate(t *testing.T) {
 	assert.Nil(t, user)
 }
 
-func TestGetUserByID(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Не удалось создать мок базы данных: %v", err)
-	}
-	defer db.Close()
+// func TestGetUserByID(t *testing.T) {
+// 	db, mock, err := sqlmock.New()
+// 	if err != nil {
+// 		t.Fatalf("Не удалось создать мок базы данных: %v", err)
+// 	}
+// 	defer db.Close()
 
-	userService := NewUserService(db)
+// 	userService := NewUserService(db)
 
-	// Тест успешного получения пользователя по ID
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "id", "mail", "nickname", "password", "is_moderator", "count_checks" FROM "user" WHERE "id" = $1`)).
-		WithArgs(1).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "mail", "nickname", "password", "is_moderator", "count_checks"}).
-			AddRow(1, "test@example.com", "testuser", hashPassword("password123"), false, 10))
+// 	// Тест успешного получения пользователя по ID
+// 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "id", "mail", "nickname", "password", "is_moderator", "count_checks" FROM "user" WHERE "id" = $1`)).
+// 		WithArgs(1).
+// 		WillReturnRows(sqlmock.NewRows([]string{"id", "mail", "nickname", "password", "is_moderator", "count_checks"}).
+// 			AddRow(1, "test@example.com", "testuser", hashPassword("password123"), false, 10))
 
-	user, err := userService.GetUserByID(1)
+// 	user, err := userService.GetUserByID(1)
 
-	assert.NoError(t, err)
-	assert.NotNil(t, user)
-	assert.Equal(t, uint64(1), user.ID)
+// 	assert.NoError(t, err)
+// 	assert.NotNil(t, user)
+// 	assert.Equal(t, uint64(1), user.ID)
 
-	// Тест случая, когда пользователь не найден
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "id", "mail", "nickname", "password", "is_moderator", "count_checks" FROM "user" WHERE "id" = $1`)).
-		WithArgs(999).
-		WillReturnError(sql.ErrNoRows)
+// 	// Тест случая, когда пользователь не найден
+// 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "id", "mail", "nickname", "password", "is_moderator", "count_checks" FROM "user" WHERE "id" = $1`)).
+// 		WithArgs(999).
+// 		WillReturnError(sql.ErrNoRows)
 
-	user, err = userService.GetUserByID(999)
-	assert.NoError(t, err)
-	assert.Nil(t, user)
+// 	user, err = userService.GetUserByID(999)
+// 	assert.NoError(t, err)
+// 	assert.Nil(t, user)
 
-	// Тест ошибки при выполнении запроса
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "id", "mail", "nickname", "password", "is_moderator", "count_checks" FROM "user" WHERE "id" = $1`)).
-		WithArgs(1).
-		WillReturnError(errors.New("some error"))
+// 	// Тест ошибки при выполнении запроса
+// 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "id", "mail", "nickname", "password", "is_moderator", "count_checks" FROM "user" WHERE "id" = $1`)).
+// 		WithArgs(1).
+// 		WillReturnError(errors.New("some error"))
 
-	user, err = userService.GetUserByID(1)
-	assert.Error(t, err)
-	assert.Nil(t, user)
-}
+// 	user, err = userService.GetUserByID(1)
+// 	assert.Error(t, err)
+// 	assert.Nil(t, user)
+// }

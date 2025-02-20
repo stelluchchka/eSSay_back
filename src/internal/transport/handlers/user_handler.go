@@ -27,7 +27,7 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/users/login", h.HandleLogin)
 	mux.HandleFunc("/users/logout", h.HandleLogout)
 	mux.HandleFunc("/users/info", h.HandleUserInfo)
-	mux.HandleFunc("/users", h.CreateUser)
+	mux.HandleFunc("/users", h.HandleUser)
 	mux.HandleFunc("/users/count", h.GetUsersCount)
 }
 
@@ -131,7 +131,7 @@ func (h *UserHandler) HandleUserInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Fetching user with ID: %d\n", id)
-	user, err := h.UserService.GetUserByID(id)
+	user, err := h.UserService.GetUserInfoByID(id)
 	if err != nil {
 		log.Printf("Error fetching user with ID %d: %v\n", id, err)
 		http.Error(w, "Error fetching user", http.StatusInternalServerError)
@@ -154,12 +154,19 @@ func (h *UserHandler) HandleUserInfo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	log.Println("POST ", r.URL.Path)
-	if r.Method != http.MethodPost {
+func (h *UserHandler) HandleUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		h.CreateUser(w, r)
+	} else if r.Method == http.MethodPut {
+		h.UpdateUser(w, r)
+	} else {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
+}
+
+func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	log.Println("POST ", r.URL.Path)
 
 	var user models.User
 	decoder := json.NewDecoder(r.Body)
@@ -205,6 +212,42 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "User created successfully")
+}
+
+func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	log.Println("PUT ", r.URL.Path)
+
+	var userData models.User
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&userData)
+	if err != nil {
+		log.Printf("Error decoding request body: %v\n", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	session, _ := config.SessionStore.Get(r, "session")
+	id, ok := session.Values["user_id"].(uint64)
+	if !ok {
+		log.Printf("Unauthorized")
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	err = h.UserService.UpdateUser(userData.Mail, userData.Nickname, id)
+	if err != nil {
+		if errors.Is(err, services.ErrDuplicateEmail) {
+			log.Print("Email already in use")
+			http.Error(w, "Email already in use", http.StatusBadRequest)
+			return
+		}
+		log.Print("Error changing info: ", err)
+		http.Error(w, "Error changing info", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Info changed successfully")
 }
 
 func (h *UserHandler) GetUsersCount(w http.ResponseWriter, r *http.Request) {

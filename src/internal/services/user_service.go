@@ -27,7 +27,7 @@ func hashPassword(password string) string {
 	return fmt.Sprintf("%x", hash[:])
 }
 
-func (s *UserService) GetUserByID(id uint64) (*models.UserInfo, error) {
+func (s *UserService) GetUserInfoByID(id uint64) (*models.UserInfo, error) {
 	user := &models.UserInfo{}
 
 	query := `SELECT 
@@ -54,6 +54,28 @@ func (s *UserService) GetUserByID(id uint64) (*models.UserInfo, error) {
 
 	return user, nil
 }
+
+// func (s *UserService) GetUserByID(id uint64) (*models.User, error) {
+// 	user := &models.User{}
+
+// 	query := `SELECT
+// 	u.id, u.mail, u.nickname, u.is_moderator, u.count_checks
+// 	FROM "user" u
+// 	WHERE u.id = $1`
+
+// 	err := s.DB.QueryRow(query, id).Scan(
+// 		&user.ID, &user.Mail, &user.Nickname, &user.IsModerator,
+// 		&user.CountChecks)
+
+// 	if err != nil {
+// 		if err == sql.ErrNoRows {
+// 			return nil, nil
+// 		}
+// 		return nil, err
+// 	}
+
+// 	return user, nil
+// }
 
 func (s *UserService) GetUsersCount() (int, error) {
 	var count int
@@ -86,6 +108,19 @@ func (s *UserService) CreateUser(user *models.User) error {
 
 	query := `INSERT INTO "user" (mail, nickname, "password") VALUES ($1, $2, $3)`
 	_, err := s.DB.Exec(query, user.Mail, user.Nickname, hashedPassword)
+	if err != nil {
+		if strings.Contains(err.Error(), "unique constraint") {
+			return ErrDuplicateEmail
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserService) UpdateUser(mail string, nickname string, id uint64) error {
+	query := `UPDATE "user" SET mail = $1, nickname = $2 WHERE id = $3`
+	_, err := s.DB.Exec(query, mail, nickname, id)
 	if err != nil {
 		if strings.Contains(err.Error(), "unique constraint") {
 			return ErrDuplicateEmail
