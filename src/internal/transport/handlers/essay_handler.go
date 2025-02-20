@@ -175,12 +175,11 @@ func (h *EssayHandler) GetUserEssays(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session, _ := config.SessionStore.Get(r, "session")
-	userIDInterface, ok := session.Values["user_id"]
+	userID, ok := session.Values["user_id"].(uint64)
 	if !ok {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
-	userID := userIDInterface.(uint64)
 
 	essays, err := h.EssayService.GetUserEssays(userID)
 	if err != nil {
