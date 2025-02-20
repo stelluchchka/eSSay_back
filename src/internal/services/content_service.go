@@ -7,6 +7,7 @@ import (
 )
 
 var ErrLikeAlreadyExists = errors.New("like already exists")
+var ErrLikeNotFound = errors.New("like doesn't exists")
 
 type ContentService struct {
 	DB *sql.DB
@@ -54,21 +55,71 @@ func (s *ContentService) GetLikesCount(essayID uint64) (int, error) {
 	return count, nil
 }
 
+func (s *ContentService) IsLiked(userID uint64, essayID uint64) (bool, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM "like" WHERE user_id = $1 AND essay_id = $2`
+	err := s.DB.QueryRow(query, userID, essayID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (s *ContentService) AddLike(userID uint64, essayID uint64) error {
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	query := `
-		INSERT INTO "like" (user_id, essay_id)
-		VALUES ($1, $2)
-		ON CONFLICT (user_id, essay_id) DO NOTHING
-		RETURNING true`
+        INSERT INTO "like" (user_id, essay_id)
+        VALUES ($1, $2)
+        ON CONFLICT (user_id, essay_id) DO NOTHING
+        RETURNING true`
 
 	var isInserted bool
-	err := s.DB.QueryRow(query, userID, essayID).Scan(&isInserted)
+	err = tx.QueryRow(query, userID, essayID).Scan(&isInserted)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return ErrLikeAlreadyExists
 		}
 		return err
 	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ContentService) DeleteLike(userID uint64, essayID uint64) error {
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	query := `DELETE FROM "like" WHERE user_id = $1 AND essay_id = $2`
+	result, err := tx.Exec(query, userID, essayID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrLikeNotFound
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

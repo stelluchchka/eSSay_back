@@ -25,10 +25,52 @@ func NewContentHandler(contentService *services.ContentService, essayService *se
 }
 
 func (h *ContentHandler) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/likes/is_liked/", h.HandleIsLiked)
 	mux.HandleFunc("/likes/", h.HandleLikes)
 	mux.HandleFunc("/comments/", h.HandleComments)
 	mux.HandleFunc("/variants/count", h.GetVariantsCount)
 	mux.HandleFunc("/variants/", h.GetVariant)
+}
+
+func (h *ContentHandler) HandleIsLiked(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Method, r.URL.Path)
+
+	essayId, err := strconv.Atoi(r.URL.Path[len("/likes/is_liked/"):])
+	if err != nil {
+		http.Error(w, "Invalid essay ID", http.StatusBadRequest)
+		return
+	}
+
+	_, err = h.EssayService.GetEssayByID(uint64(essayId))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("Failed to find essay with id %d: %v", essayId, err)
+			http.Error(w, "Essay not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("Error fetching essay with id %d: %v", essayId, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	session, _ := config.SessionStore.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint64)
+	if !ok {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	isLiked, err := h.ContentService.IsLiked(userID, uint64(essayId))
+	if err != nil {
+		log.Printf("Error checking if liked: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	log.Print("isLiked", isLiked)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]bool{"is_liked": isLiked})
 }
 
 func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
@@ -62,27 +104,43 @@ func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]int{"likes": count})
 
-	case http.MethodPost:
+	case http.MethodPut:
 		session, _ := config.SessionStore.Get(r, "session")
-		userIDInterface, ok := session.Values["user_id"]
+		userID, ok := session.Values["user_id"].(uint64)
 		if !ok {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-		userID := userIDInterface.(uint64)
 
-		if err := h.ContentService.AddLike(userID, uint64(id)); err != nil {
-			if errors.Is(err, services.ErrLikeAlreadyExists) {
-				log.Print("Error adding like: ", err)
-				http.Error(w, "Error adding like", http.StatusBadRequest)
+		if isLiked, err := h.ContentService.IsLiked(userID, uint64(id)); err != nil {
+			log.Print("Error with like: ", err)
+			http.Error(w, "Error with like", http.StatusInternalServerError)
+			return
+		} else if !isLiked {
+			if err := h.ContentService.AddLike(userID, uint64(id)); err != nil {
+				if errors.Is(err, services.ErrLikeAlreadyExists) {
+					log.Print("Error adding like: ", err)
+					http.Error(w, "Error adding like", http.StatusBadRequest)
+					return
+				}
+				http.Error(w, "Error adding like", http.StatusInternalServerError)
 				return
 			}
-			http.Error(w, "Error adding like", http.StatusInternalServerError)
-			return
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Like added successfully"))
+		} else {
+			if err := h.ContentService.DeleteLike(userID, uint64(id)); err != nil {
+				if errors.Is(err, services.ErrLikeAlreadyExists) {
+					log.Print("Error removing like: ", err)
+					http.Error(w, "Error removing like", http.StatusBadRequest)
+					return
+				}
+				http.Error(w, "Error removing like", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Like removed successfully"))
 		}
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Like added successfully"))
-
 	default:
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
