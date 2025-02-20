@@ -173,6 +173,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	err = h.UserService.CreateUser(&user)
 	if err != nil {
 		if errors.Is(err, services.ErrDuplicateEmail) {
+			log.Print("Email already in use")
 			http.Error(w, "Email already in use", http.StatusBadRequest)
 			return
 		}
@@ -180,6 +181,27 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error creating user", http.StatusInternalServerError)
 		return
 	}
+
+	created_user, err := h.UserService.Authenticate(user.Mail, user.Password)
+	if err != nil {
+		if errors.Is(err, services.ErrInvalidCredentials) {
+			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	session, _ := config.SessionStore.Get(r, "session")
+	session.Values["user_id"] = created_user.ID
+	session.Values["is_moderator"] = created_user.IsModerator
+	err = session.Save(r, w)
+	if err != nil {
+		log.Printf("Error saving session: %v\n", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	log.Print("session: ", session)
 
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintf(w, "User created successfully")

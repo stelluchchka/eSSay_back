@@ -84,7 +84,7 @@ func (s *UserService) GetNickname(mail string) (string, error) {
 func (s *UserService) CreateUser(user *models.User) error {
 	hashedPassword := hashPassword(user.Password)
 
-	query := `INSERT INTO "user" (mail, nickname, password) VALUES ($1, $2, $3)`
+	query := `INSERT INTO "user" (mail, nickname, "password") VALUES ($1, $2, $3)`
 	_, err := s.DB.Exec(query, user.Mail, user.Nickname, hashedPassword)
 	if err != nil {
 		if strings.Contains(err.Error(), "unique constraint") {
