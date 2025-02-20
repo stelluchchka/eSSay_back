@@ -1,6 +1,7 @@
 package config
 
 import (
+	"essay/src/internal/middleware"
 	"log"
 	"net/http"
 	"os"
@@ -52,4 +53,13 @@ func InitSessionStore() {
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	}
+}
+
+var СorsConfig = middleware.CORSConfig{
+	AllowedOrigins:   []string{"http://localhost:3000"},
+	AllowedMethods:   []string{http.MethodDelete, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
+	AllowedHeaders:   []string{"Content-Type", "Authorization"},
+	ExposeHeaders:    []string{"Content-Length"},
+	AllowCredentials: true,
+	MaxAge:           3600,
 }

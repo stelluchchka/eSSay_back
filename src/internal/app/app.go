@@ -57,14 +57,5 @@ func (a *App) ServeMux() http.Handler {
 	a.EssayHandler.RegisterRoutes(mux)
 	a.ContentHandler.RegisterRoutes(mux)
 
-	corsConfig := middleware.CORSConfig{
-		AllowedOrigins:   []string{"http://localhost:3000"},
-		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
-		AllowedHeaders:   []string{"Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           3600,
-	}
-
-	return middleware.NewCORSMiddleware(corsConfig)(mux)
+	return middleware.NewCORSMiddleware(config.СorsConfig)(mux)
 }
