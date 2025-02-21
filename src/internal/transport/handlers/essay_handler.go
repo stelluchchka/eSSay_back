@@ -25,7 +25,6 @@ func NewEssayHandler(essayService *services.EssayService) *EssayHandler {
 }
 
 func (h *EssayHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/essays/count", h.GetEssaysCount)
 	mux.HandleFunc("/essays", h.HandleEssaysRequests)
 	mux.HandleFunc("/essays/", h.HandleEssayRequests)
 	mux.HandleFunc("/essays/appeal", h.GetAppealEssays)
@@ -276,7 +275,8 @@ func (h *EssayHandler) CreateEssay(w http.ResponseWriter, r *http.Request) {
 	essay.VariantID = reqBody.VariantId
 	essay.UserID = userID
 
-	if err := h.EssayService.CreateEssay(&essay); err != nil {
+	essayId, err := h.EssayService.CreateEssay(&essay)
+	if err != nil {
 		log.Printf("Failed to create essay: %v", err)
 		http.Error(w, "Failed to create essay", http.StatusInternalServerError)
 		return
@@ -284,6 +284,10 @@ func (h *EssayHandler) CreateEssay(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Essay created successfully: %+v", essay)
 	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int{
+		"essay_id": essayId,
+	})
 }
 
 // UpdateEssay handles PUT /essays/:id.
@@ -438,25 +442,4 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 
 	log.Print("Essay status changed successfully")
 	w.WriteHeader(http.StatusOK)
-}
-
-// GetEssaysCount handles GET /essays/count
-func (h *EssayHandler) GetEssaysCount(w http.ResponseWriter, r *http.Request) {
-	log.Println("GET ", r.URL.Path)
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	count, err := h.EssayService.GetEssaysCount()
-	if err != nil {
-		log.Print("Error getting essays count: ", err)
-		http.Error(w, "Error getting essays count", http.StatusInternalServerError)
-		return
-	}
-	log.Print("Essays count: ", count)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{
-		"essays_count": count,
-	})
 }

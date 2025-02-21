@@ -19,17 +19,30 @@ func NewContentService(db *sql.DB) *ContentService {
 	}
 }
 
-func (s *ContentService) GetVariantsCount() (int, error) {
-	var count int
+func (s *ContentService) GetCounts() (int, int, int, error) {
+	var variants_count int
+	var essays_count int
+	var users_count int
 
-	query := `SELECT COUNT(*) FROM variant`
-	err := s.DB.QueryRow(query).Scan(&count)
-
+	variants_query := `SELECT COUNT(*) FROM variant`
+	err := s.DB.QueryRow(variants_query).Scan(&variants_count)
 	if err != nil {
-		return 0, err
+		return 0, 0, 0, err
 	}
 
-	return count, nil
+	essays_query := `SELECT COUNT(*) FROM essay`
+	err = s.DB.QueryRow(essays_query).Scan(&essays_count)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	users_query := `SELECT COUNT(*) FROM "user"`
+	err = s.DB.QueryRow(users_query).Scan(&users_count)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	return variants_count, essays_count, users_count, nil
 }
 
 func (s *ContentService) GetVariantByID(variantID uint64) (models.Variant, error) {

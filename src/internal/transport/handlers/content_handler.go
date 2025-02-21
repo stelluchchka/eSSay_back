@@ -25,10 +25,10 @@ func NewContentHandler(contentService *services.ContentService, essayService *se
 }
 
 func (h *ContentHandler) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/counts", h.GetCounts)
 	mux.HandleFunc("/likes/is_liked/", h.HandleIsLiked)
 	mux.HandleFunc("/likes/", h.HandleLikes)
 	mux.HandleFunc("/comments/", h.HandleComments)
-	mux.HandleFunc("/variants/count", h.GetVariantsCount)
 	mux.HandleFunc("/variants/", h.GetVariant)
 }
 
@@ -205,27 +205,6 @@ func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// GetVariantsCount handles GET /variants/count
-func (h *ContentHandler) GetVariantsCount(w http.ResponseWriter, r *http.Request) {
-	log.Println("GET ", r.URL.Path)
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	count, err := h.ContentService.GetVariantsCount()
-	if err != nil {
-		log.Print("Error getting variants count: ", err)
-		http.Error(w, "Error getting variants count", http.StatusInternalServerError)
-		return
-	}
-	log.Print("Variants count: ", count)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{
-		"variants_count": count,
-	})
-}
-
 // GetVariant handles GET /variants/id
 func (h *ContentHandler) GetVariant(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET ", r.URL.Path)
@@ -251,4 +230,27 @@ func (h *ContentHandler) GetVariant(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(variant)
+}
+
+// GetCounts handles GET /counts
+func (h *ContentHandler) GetCounts(w http.ResponseWriter, r *http.Request) {
+	log.Println("GET ", r.URL.Path)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	variants_count, essays_count, users_count, err := h.ContentService.GetCounts()
+	if err != nil {
+		log.Print("Error getting variants count: ", err)
+		http.Error(w, "Error getting variants count", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int{
+		"variants_count": variants_count,
+		"essays_count":   essays_count,
+		"users_count":    users_count,
+	})
 }

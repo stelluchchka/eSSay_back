@@ -284,13 +284,14 @@ func TestEssayService_CreateEssay(t *testing.T) {
 		IsPublished: false,
 	}
 
-	mock.ExpectExec(`INSERT INTO essay \(essay_text, updated_at, status, is_published, user_id, variant_id\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6\)`).
+	mock.ExpectQuery(`INSERT INTO essay \(essay_text, updated_at, status, is_published, user_id, variant_id\) VALUES \(\$1, \$2, \$3, \$4, \$5, \$6\) RETURNING id`).
 		WithArgs(newEssay.EssayText, sqlmock.AnyArg(), "draft", false, newEssay.UserID, newEssay.VariantID).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-	err := service.CreateEssay(&newEssay)
+	id, err := service.CreateEssay(&newEssay)
 
 	assert.NoError(t, err)
+	assert.Equal(t, 1, id)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 

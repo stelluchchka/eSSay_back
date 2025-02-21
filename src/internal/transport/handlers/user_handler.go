@@ -28,7 +28,6 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/users/logout", h.HandleLogout)
 	mux.HandleFunc("/users/info", h.HandleUserInfo)
 	mux.HandleFunc("/users", h.HandleUser)
-	mux.HandleFunc("/users/count", h.GetUsersCount)
 }
 
 func (h *UserHandler) GetNickname(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +129,7 @@ func (h *UserHandler) HandleUserInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Fetching user with ID: %d\n", id)
+	// log.Printf("Fetching user with ID: %d\n", id)
 	user, err := h.UserService.GetUserInfoByID(id)
 	if err != nil {
 		log.Printf("Error fetching user with ID %d: %v\n", id, err)
@@ -248,24 +247,4 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Info changed successfully")
-}
-
-func (h *UserHandler) GetUsersCount(w http.ResponseWriter, r *http.Request) {
-	log.Println("GET ", r.URL.Path)
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	count, err := h.UserService.GetUsersCount()
-	if err != nil {
-		log.Print("Error getting users count: ", err)
-		http.Error(w, "Error getting users count", http.StatusInternalServerError)
-		return
-	}
-	log.Print("Users count: ", count)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{
-		"users_count": count,
-	})
 }

@@ -252,14 +252,16 @@ func (s *EssayService) GetUserEssays(userID uint64) ([]models.EssayCard, error) 
 	return essayCards, nil
 }
 
-// CreateEssay creates a new essay in draft status.
-func (s *EssayService) CreateEssay(essay *models.Essay) error {
-	query := `INSERT INTO essay (essay_text, updated_at, status, is_published, user_id, variant_id) VALUES ($1, $2, $3, $4, $5, $6)`
-	_, err := s.DB.Exec(query, essay.EssayText, time.Now(), "draft", false, essay.UserID, essay.VariantID)
+// CreateEssay creates a new essay in draft status and returns the ID of the created essay.
+func (s *EssayService) CreateEssay(essay *models.Essay) (int, error) {
+	query := `INSERT INTO essay (essay_text, updated_at, status, is_published, user_id, variant_id) 
+              VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+	var id int
+	err := s.DB.QueryRow(query, essay.EssayText, time.Now(), "draft", false, essay.UserID, essay.VariantID).Scan(&id)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return id, nil
 }
 
 // UpdateEssay updates an existing essay.
