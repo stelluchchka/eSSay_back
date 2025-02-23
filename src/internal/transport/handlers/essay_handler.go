@@ -228,18 +228,12 @@ func (h *EssayHandler) GetUserEssayByID(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	var detailedEssay models.DetailedEssay
+	// var detailedEssay models.DetailedEssay
 
-	switch essay.Status {
-	case "draft":
-		http.Error(w, "Cannot access a draft", http.StatusBadRequest)
-		return
-	case "saved", "checked", "appeal", "appealed":
-		detailedEssay = *essay
-	}
+	// detailedEssay = *essay
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(detailedEssay)
+	json.NewEncoder(w).Encode(essay)
 }
 
 // CreateEssay handles POST /essays.
