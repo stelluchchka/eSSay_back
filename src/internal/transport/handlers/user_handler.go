@@ -145,7 +145,7 @@ func (h *UserHandler) HandleUserInfo(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	log.Printf("Successfully fetched user with ID %d\n", id)
+	// log.Printf("Successfully fetched user with ID %d\n", id)
 	err = json.NewEncoder(w).Encode(user)
 	if err != nil {
 		log.Printf("Failed to encode response for user with ID %d: %v\n", id, err)

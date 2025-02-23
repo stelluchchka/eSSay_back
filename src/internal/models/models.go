@@ -66,6 +66,7 @@ type EssayCard struct {
 	AuthorNickname string `json:"author_nickname"`
 	Likes          int    `json:"likes"`
 	Score          int    `json:"score"`
+	Status         string `json:"status"`
 }
 
 type DetailedEssay struct {

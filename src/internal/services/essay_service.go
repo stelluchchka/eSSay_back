@@ -222,7 +222,8 @@ func (s *EssayService) GetUserEssays(userID uint64) ([]models.EssayCard, error) 
 		SELECT 
 			e.id, e.variant_id, v.variant_title, u.nickname AS author_nickname, 
 			COALESCE(COUNT(l.user_id), 0) AS likes, 
-			COALESCE(r.sum_score, 0) AS score
+			COALESCE(r.sum_score, 0) AS score,
+			e.status
 		FROM essay e
 		JOIN variant v ON e.variant_id = v.id
 		JOIN "user" u ON e.user_id = u.id
@@ -242,7 +243,7 @@ func (s *EssayService) GetUserEssays(userID uint64) ([]models.EssayCard, error) 
 		var essayCard models.EssayCard
 		if err := rows.Scan(
 			&essayCard.ID, &essayCard.VariantID, &essayCard.VariantTitle, &essayCard.AuthorNickname,
-			&essayCard.Likes, &essayCard.Score,
+			&essayCard.Likes, &essayCard.Score, &essayCard.Status,
 		); err != nil {
 			return nil, err
 		}
