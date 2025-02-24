@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type Config struct {
+type DBConfig struct {
 	DBHost     string
 	DBPort     string
 	DBUser     string
@@ -18,18 +18,41 @@ type Config struct {
 	DBName     string
 }
 
-func LoadConfig() (*Config, error) {
+type KafkaConfig struct {
+	Brokers  string
+	Topic    string
+	ClientID string
+	Acks     string
+}
+
+func LoadDBConfig() (*DBConfig, error) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("No .env file found or failed to load")
 	}
 
-	config := &Config{
+	config := &DBConfig{
 		DBHost:     getEnv("DB_HOST", "localhost"),
 		DBPort:     getEnv("DB_PORT", "5432"),
 		DBUser:     getEnv("DB_USER", "postgres"),
 		DBPassword: getEnv("DB_PASSWORD", "1234"),
 		DBName:     getEnv("DB_NAME", "db"),
+	}
+
+	return config, nil
+}
+
+func LoadKafkaConfig() (*KafkaConfig, error) {
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found or failed to load")
+	}
+
+	config := &KafkaConfig{
+		Brokers:  getEnv("KAFKA_BROKERS", "localhost:9092"),
+		Topic:    getEnv("KAFKA_TOPIC", "essay_check_queue"),
+		ClientID: getEnv("KAFKA_CLIENT_ID", "essay_producer"),
+		Acks:     getEnv("KAFKA_ACKS", "all"),
 	}
 
 	return config, nil

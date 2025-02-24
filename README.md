@@ -45,6 +45,11 @@ Backend-часть системы автоматической проверки 
     DB_PASSWORD=1234
     DB_NAME=essay
     SECRET_KEY=SECRET_KEYSECRET_KEYSECRET_KEY
+
+    KAFKA_BROKERS=localhost:9092
+    KAFKA_TOPIC=essay_check_queue
+    KAFKA_CLIENT_ID=essay_producer
+    KAFKA_ACKS=all
     ```
 3. **Соберите и запустите сервис:**
     ```bash

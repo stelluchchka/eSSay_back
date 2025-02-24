@@ -18,4 +18,15 @@ user1
 session=MTczNzMzNTYxM3xEWDhFQVFMX2dBQUJFQUVRQUFCQV80QUFBZ1p6ZEhKcGJtY01DUUFIZFhObGNsOXBaQVYxYVc1ME9BWUNBQUVHYzNSeWFXNW5EQTRBREdselgyMXZaR1Z5WVhSdmNnUmliMjlzQWdJQUFBPT18GGIBJfEi55z-xgsph431YpE5stfksWBowtPhSU3nWR0=; Path=/; Expires=Mon, 27 Jan 2025 01:13:33 GMT; Max-Age=604800; HttpOnly
 
 moderator
-session=MTczNzMzNzE2N3xEWDhFQVFMX2dBQUJFQUVRQUFCQV80QUFBZ1p6ZEhKcGJtY01EZ0FNYVhOZmJXOWtaWEpoZEc5eUJHSnZiMndDQWdBQkJuTjBjbWx1Wnd3SkFBZDFjMlZ5WDJsa0JYVnBiblE0QmdJQUF3PT18h1beWjF-9J8qBOKxr4JF8V5dNofgdsZ7V4pi3o6Me1o=
+session=MTc0MDA2MzEwNnxEWDhFQVFMX2dBQUJFQUVRQUFCQl80QUFBZ1p6ZEhKcGJtY01DUUFIZFhObGNsOXBaQVoxYVc1ME5qUUdBZ0FEQm5OMGNtbHVad3dPQUF4cGMxOXRiMlJsY21GMGIzSUVZbTl2YkFJQ0FBRT180favsg55zjbUm63zhAHUsdYlAZ1n-8csHd8wFKwn8Lk=
+
+
+
+docker-compose up -d
+docker ps
+
+создать топик:
+docker exec -it kafka kafka-topics.sh --create --topic essay_check_queue --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+
+посмотреть содержимое этого топика:
+docker exec -it kafka kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic essay_check_queue --from-beginning

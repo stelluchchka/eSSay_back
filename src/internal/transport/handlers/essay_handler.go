@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"essay/src/internal/config"
+	"essay/src/internal/kafka"
 	"essay/src/internal/models"
 	"essay/src/internal/services"
 )
@@ -402,7 +403,22 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		status = "saved"
-		// TODO: положить в очередь на проверку
+
+		kafkaConfig, err := config.LoadKafkaConfig()
+		if err != nil {
+			log.Printf("Failed to load Kafka config: %v", err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		err = kafka.ProduceEssay(kafkaConfig.Brokers, kafkaConfig.Topic, *essay)
+		if err != nil {
+			log.Printf("Failed to enqueue essay for checking: %v", err)
+			http.Error(w, "Failed to enqueue essay for checking", http.StatusInternalServerError)
+			return
+		}
+		log.Printf("Essay ID %d enqueued for checking", id)
+
 	case "appeal":
 		if essay.Status != "checked" {
 			log.Printf("Failed to file appeal for essay with id %d: status should be checked", id)

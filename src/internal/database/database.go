@@ -28,7 +28,7 @@ func GetPostgreSQLConnection() *DB {
 }
 
 func initializeDatabase() *sql.DB {
-	cfg, err := config.LoadConfig()
+	cfg, err := config.LoadDBConfig()
 	if err != nil {
 		log.Fatal("Error loading config:", err)
 	}
