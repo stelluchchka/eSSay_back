@@ -75,10 +75,6 @@ func (h *EssayHandler) HandleEssayRequests(w http.ResponseWriter, r *http.Reques
 // GetPublishedEssays handles GET /essays.
 func (h *EssayHandler) GetPublishedEssays(w http.ResponseWriter, r *http.Request) {
 	log.Print("GET ", r.URL.Path)
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		return
-	}
 
 	essays, err := h.EssayService.GetPublishedEssays()
 	if err != nil {

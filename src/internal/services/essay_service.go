@@ -72,7 +72,7 @@ func (s *EssayService) GetPublishedEssays() ([]models.EssayCard, error) {
 
 // GetPublishedEssays retrieves all appeal essays.
 func (s *EssayService) GetAppealEssays() ([]models.Essay, error) {
-	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE status = 'appeal'`
+	query := `SELECT id, essay_text, completed_at, status, is_published, user_id, variant_id FROM essay WHERE status = 'appeal'`
 	rows, err := s.DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (s *EssayService) GetAppealEssays() ([]models.Essay, error) {
 
 // GetEssayByID retrieves an essay by its ID.
 func (s *EssayService) GetEssayByID(id uint64) (*models.Essay, error) {
-	query := `SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE id = $1`
+	query := `SELECT id, essay_text, completed_at, status, is_published, user_id, variant_id FROM essay WHERE id = $1`
 	row := s.DB.QueryRow(query, id)
 
 	var essay models.Essay
@@ -107,7 +107,7 @@ func (s *EssayService) GetEssayByID(id uint64) (*models.Essay, error) {
 // GetDetailedEssayByID retrieves detailed essay by its ID.
 func (s *EssayService) GetDetailedEssayByID(id uint64) (*models.DetailedEssay, error) {
 	var essay models.DetailedEssay
-	err := s.DB.QueryRow("SELECT e.id, variant_id, essay_text, updated_at, status, is_published, user_id, nickname FROM essay e JOIN \"user\" u ON e.user_id = u.id WHERE e.id = $1", id).Scan(
+	err := s.DB.QueryRow("SELECT e.id, variant_id, essay_text, completed_at, status, is_published, user_id, nickname FROM essay e JOIN \"user\" u ON e.user_id = u.id WHERE e.id = $1", id).Scan(
 		&essay.ID,
 		&essay.VariantID,
 		&essay.EssayText,
@@ -168,7 +168,17 @@ func (s *EssayService) GetDetailedEssayByID(id uint64) (*models.DetailedEssay, e
 		COALESCE(SUM(CASE WHEN rc.criteria_id = 8 THEN rc.score ELSE 0 END), 0) AS K8_score,
 		COALESCE(SUM(CASE WHEN rc.criteria_id = 9 THEN rc.score ELSE 0 END), 0) AS K9_score,
 		COALESCE(SUM(CASE WHEN rc.criteria_id = 10 THEN rc.score ELSE 0 END), 0) AS K10_score,
-		SUM(rc.score) AS Score
+		SUM(rc.score) AS Score,
+		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 1 THEN rc.explanation ELSE NULL END, ', '), '') AS K1_explanation,
+		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 2 THEN rc.explanation ELSE NULL END, ', '), '') AS K2_explanation,
+		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 3 THEN rc.explanation ELSE NULL END, ', '), '') AS K3_explanation,
+		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 4 THEN rc.explanation ELSE NULL END, ', '), '') AS K4_explanation,
+		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 5 THEN rc.explanation ELSE NULL END, ', '), '') AS K5_explanation,
+		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 6 THEN rc.explanation ELSE NULL END, ', '), '') AS K6_explanation,
+		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 7 THEN rc.explanation ELSE NULL END, ', '), '') AS K7_explanation,
+		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 8 THEN rc.explanation ELSE NULL END, ', '), '') AS K8_explanation,
+		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 9 THEN rc.explanation ELSE NULL END, ', '), '') AS K9_explanation,
+		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 10 THEN rc.explanation ELSE NULL END, ', '), '') AS K10_explanation
 	FROM 
 		result r
 	LEFT JOIN 
@@ -176,7 +186,7 @@ func (s *EssayService) GetDetailedEssayByID(id uint64) (*models.DetailedEssay, e
 	WHERE 
 		r.essay_id = $1
 	GROUP BY 
-		r.id
+		r.id;
 	`
 
 	rows, err = s.DB.Query(query, essay.ID)
@@ -200,6 +210,16 @@ func (s *EssayService) GetDetailedEssayByID(id uint64) (*models.DetailedEssay, e
 			&result.K9_score,
 			&result.K10_score,
 			&result.Score,
+			&result.K1_explanation,
+			&result.K2_explanation,
+			&result.K3_explanation,
+			&result.K4_explanation,
+			&result.K5_explanation,
+			&result.K6_explanation,
+			&result.K7_explanation,
+			&result.K8_explanation,
+			&result.K9_explanation,
+			&result.K10_explanation,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning results: %w", err)
@@ -255,7 +275,7 @@ func (s *EssayService) GetUserEssays(userID uint64) ([]models.EssayCard, error) 
 
 // CreateEssay creates a new essay in draft status and returns the ID of the created essay.
 func (s *EssayService) CreateEssay(essay *models.Essay) (int, error) {
-	query := `INSERT INTO essay (essay_text, updated_at, status, is_published, user_id, variant_id) 
+	query := `INSERT INTO essay (essay_text, completed_at, status, is_published, user_id, variant_id) 
               VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 	var id int
 	err := s.DB.QueryRow(query, essay.EssayText, time.Now(), "draft", false, essay.UserID, essay.VariantID).Scan(&id)
