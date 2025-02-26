@@ -63,6 +63,7 @@ CREATE TABLE result_criteria (
     result_id INTEGER,
     criteria_id INTEGER,
     score INTEGER,
+    explanation TEXT,
     PRIMARY KEY (result_id, criteria_id),
     FOREIGN KEY (result_id) REFERENCES result(id),
     FOREIGN KEY (criteria_id) REFERENCES criteria(id)

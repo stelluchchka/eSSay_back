@@ -30,3 +30,11 @@ docker exec -it kafka kafka-topics.sh --create --topic essay_check_queue --boots
 
 посмотреть содержимое этого топика:
 docker exec -it kafka kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic essay_check_queue --from-beginning
+
+select * from essay
+select * from result
+select * from criteria
+select * from result_criteria
+select * from "like"
+select * from variant
+select * from "user"

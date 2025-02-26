@@ -54,9 +54,10 @@ type Criteria struct {
 }
 
 type ResultCriteria struct {
-	ResultID   uint64 `json:"result_id"`
-	CriteriaID uint64 `json:"criteria_id"`
-	Score      int    `json:"score"`
+	ResultID    uint64 `json:"result_id"`
+	CriteriaID  uint64 `json:"criteria_id"`
+	Score       int    `json:"score"`
+	Explanation string `json:"explanation"`
 }
 
 type EssayCard struct {
@@ -103,18 +104,28 @@ type DetailedEssayComment struct {
 }
 
 type DetailedResult struct {
-	K1_score   int
-	K2_score   int
-	K3_score   int
-	K4_score   int
-	K5_score   int
-	K6_score   int
-	K7_score   int
-	K8_score   int
-	K9_score   int
-	K10_score  int
-	Score      int
-	AppealText string
+	K1_score        int
+	K2_score        int
+	K3_score        int
+	K4_score        int
+	K5_score        int
+	K6_score        int
+	K7_score        int
+	K8_score        int
+	K9_score        int
+	K10_score       int
+	K1_explanation  string
+	K2_explanation  string
+	K3_explanation  string
+	K4_explanation  string
+	K5_explanation  string
+	K6_explanation  string
+	K7_explanation  string
+	K8_explanation  string
+	K9_explanation  string
+	K10_explanation string
+	Score           int
+	AppealText      string
 }
 
 type UserInfo struct {
