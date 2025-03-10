@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestContentService_GetLikesCount(t *testing.T) {
+func TestUserService_GetLikesCount(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewContentService(db)
+	service := NewUserService(db)
 	essayID := uint64(1)
 	expectedCount := 5
 
@@ -29,11 +29,11 @@ func TestContentService_GetLikesCount(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestContentService_AddLike_Success(t *testing.T) {
+func TestUserService_AddLike_Success(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewContentService(db)
+	service := NewUserService(db)
 	userID := uint64(1)
 	essayID := uint64(1)
 
@@ -51,11 +51,11 @@ func TestContentService_AddLike_Success(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestContentService_AddLike_AlreadyExists(t *testing.T) {
+func TestUserService_AddLike_AlreadyExists(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewContentService(db)
+	service := NewUserService(db)
 	userID := uint64(1)
 	essayID := uint64(1)
 
@@ -73,11 +73,11 @@ func TestContentService_AddLike_AlreadyExists(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestContentService_GetComments(t *testing.T) {
+func TestUserService_GetComments(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewContentService(db)
+	service := NewUserService(db)
 	essayID := uint64(1)
 
 	expectedComments := []models.Comment{
@@ -100,11 +100,11 @@ func TestContentService_GetComments(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestContentService_AddComment(t *testing.T) {
+func TestUserService_AddComment(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewContentService(db)
+	service := NewUserService(db)
 	userID := uint64(1)
 	essayID := uint64(1)
 	commentText := "New comment"
@@ -113,7 +113,7 @@ func TestContentService_AddComment(t *testing.T) {
 		WithArgs(userID, essayID, commentText).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err := service.AddComment(userID, essayID, commentText)
+	_, err := service.AddComment(userID, essayID, commentText)
 
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())

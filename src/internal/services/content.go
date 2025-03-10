@@ -2,24 +2,10 @@ package services
 
 import (
 	"database/sql"
-	"errors"
 	"essay/src/internal/models"
 )
 
-var ErrLikeAlreadyExists = errors.New("like already exists")
-var ErrLikeNotFound = errors.New("like doesn't exists")
-
-type ContentService struct {
-	DB *sql.DB
-}
-
-func NewContentService(db *sql.DB) *ContentService {
-	return &ContentService{
-		DB: db,
-	}
-}
-
-func (s *ContentService) GetCounts() (int, int, int, error) {
+func (s *UserService) GetCounts() (int, int, int, error) {
 	var variants_count int
 	var essays_count int
 	var users_count int
@@ -45,7 +31,7 @@ func (s *ContentService) GetCounts() (int, int, int, error) {
 	return variants_count, essays_count, users_count, nil
 }
 
-func (s *ContentService) GetVariantByID(variantID uint64) (models.Variant, error) {
+func (s *UserService) GetVariantByID(variantID uint64) (models.Variant, error) {
 	var variant models.Variant
 
 	query := `SELECT id, variant_title, variant_text FROM variant WHERE id = $1`
@@ -58,7 +44,7 @@ func (s *ContentService) GetVariantByID(variantID uint64) (models.Variant, error
 	return variant, nil
 }
 
-func (s *ContentService) GetLikesCount(essayID uint64) (int, error) {
+func (s *UserService) GetLikesCount(essayID uint64) (int, error) {
 	var count int
 	query := `SELECT COUNT(*) FROM "like" WHERE essay_id = $1`
 	err := s.DB.QueryRow(query, essayID).Scan(&count)
@@ -68,7 +54,7 @@ func (s *ContentService) GetLikesCount(essayID uint64) (int, error) {
 	return count, nil
 }
 
-func (s *ContentService) IsLiked(userID uint64, essayID uint64) (bool, error) {
+func (s *UserService) IsLiked(userID uint64, essayID uint64) (bool, error) {
 	var count int
 	query := `SELECT COUNT(*) FROM "like" WHERE user_id = $1 AND essay_id = $2`
 	err := s.DB.QueryRow(query, userID, essayID).Scan(&count)
@@ -78,7 +64,7 @@ func (s *ContentService) IsLiked(userID uint64, essayID uint64) (bool, error) {
 	return count > 0, nil
 }
 
-func (s *ContentService) AddLike(userID uint64, essayID uint64) error {
+func (s *UserService) AddLike(userID uint64, essayID uint64) error {
 	tx, err := s.DB.Begin()
 	if err != nil {
 		return err
@@ -107,7 +93,7 @@ func (s *ContentService) AddLike(userID uint64, essayID uint64) error {
 	return nil
 }
 
-func (s *ContentService) DeleteLike(userID uint64, essayID uint64) error {
+func (s *UserService) DeleteLike(userID uint64, essayID uint64) error {
 	tx, err := s.DB.Begin()
 	if err != nil {
 		return err
@@ -136,7 +122,7 @@ func (s *ContentService) DeleteLike(userID uint64, essayID uint64) error {
 	return nil
 }
 
-func (s *ContentService) GetComments(essayID uint64) ([]models.Comment, error) {
+func (s *UserService) GetComments(essayID uint64) ([]models.Comment, error) {
 	query := `SELECT user_id, essay_id, comment_text, created_at FROM comment WHERE essay_id = $1`
 	rows, err := s.DB.Query(query, essayID)
 	if err != nil {
@@ -156,8 +142,25 @@ func (s *ContentService) GetComments(essayID uint64) ([]models.Comment, error) {
 	return comments, nil
 }
 
-func (s *ContentService) AddComment(userID uint64, essayID uint64, text string) error {
-	query := `INSERT INTO comment (user_id, essay_id, comment_text, created_at) VALUES ($1, $2, $3, NOW())`
-	_, err := s.DB.Exec(query, userID, essayID, text)
-	return err
+func (s *UserService) AddComment(userID uint64, essayID uint64, text string) (models.DetailedEssayComment, error) {
+	query := `INSERT INTO comment (user_id, essay_id, comment_text, created_at) 
+              VALUES ($1, $2, $3, NOW()) 
+              RETURNING id, user_id, comment_text, created_at`
+
+	var comment models.DetailedEssayComment
+	err := s.DB.QueryRow(query, userID, essayID, text).Scan(&comment.ID, &comment.AuthorNickname, &comment.CommentText, &comment.CreatedAt)
+
+	if err != nil {
+		return models.DetailedEssayComment{}, err
+	}
+
+	var authorNickname string
+	err = s.DB.QueryRow(`SELECT nickname FROM "user" WHERE id = $1`, userID).Scan(&authorNickname)
+	if err != nil {
+		return models.DetailedEssayComment{}, err
+	}
+
+	comment.AuthorNickname = authorNickname
+
+	return comment, nil
 }

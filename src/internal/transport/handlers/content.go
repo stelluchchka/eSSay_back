@@ -12,27 +12,7 @@ import (
 	"strings"
 )
 
-type ContentHandler struct {
-	ContentService *services.ContentService
-	EssayService   *services.EssayService
-}
-
-func NewContentHandler(contentService *services.ContentService, essayService *services.EssayService) *ContentHandler {
-	return &ContentHandler{
-		ContentService: contentService,
-		EssayService:   essayService,
-	}
-}
-
-func (h *ContentHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/counts", h.GetCounts)
-	mux.HandleFunc("/likes/is_liked/", h.HandleIsLiked)
-	mux.HandleFunc("/likes/", h.HandleLikes)
-	mux.HandleFunc("/comments/", h.HandleComments)
-	mux.HandleFunc("/variants/", h.GetVariant)
-}
-
-func (h *ContentHandler) HandleIsLiked(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleIsLiked(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path)
 
 	essayId, err := strconv.Atoi(r.URL.Path[len("/likes/is_liked/"):])
@@ -41,7 +21,7 @@ func (h *ContentHandler) HandleIsLiked(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.EssayService.GetEssayByID(uint64(essayId))
+	_, err = h.UserService.GetEssayByID(uint64(essayId))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", essayId, err)
@@ -60,7 +40,7 @@ func (h *ContentHandler) HandleIsLiked(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isLiked, err := h.ContentService.IsLiked(userID, uint64(essayId))
+	isLiked, err := h.UserService.IsLiked(userID, uint64(essayId))
 	if err != nil {
 		log.Printf("Error checking if liked: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -73,7 +53,7 @@ func (h *ContentHandler) HandleIsLiked(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]bool{"is_liked": isLiked})
 }
 
-func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path)
 	id, err := strconv.Atoi(r.URL.Path[len("/likes/"):])
 	if err != nil {
@@ -81,7 +61,7 @@ func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.EssayService.GetEssayByID(uint64(id))
+	_, err = h.UserService.GetEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
@@ -95,7 +75,7 @@ func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		count, err := h.ContentService.GetLikesCount(uint64(id))
+		count, err := h.UserService.GetLikesCount(uint64(id))
 		if err != nil {
 			log.Printf("Error fetching likes count: %s", err)
 			http.Error(w, "Error fetching likes count", http.StatusInternalServerError)
@@ -112,12 +92,12 @@ func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if isLiked, err := h.ContentService.IsLiked(userID, uint64(id)); err != nil {
+		if isLiked, err := h.UserService.IsLiked(userID, uint64(id)); err != nil {
 			log.Print("Error with like: ", err)
 			http.Error(w, "Error with like", http.StatusInternalServerError)
 			return
 		} else if !isLiked {
-			if err := h.ContentService.AddLike(userID, uint64(id)); err != nil {
+			if err := h.UserService.AddLike(userID, uint64(id)); err != nil {
 				if errors.Is(err, services.ErrLikeAlreadyExists) {
 					log.Print("Error adding like: ", err)
 					http.Error(w, "Error adding like", http.StatusBadRequest)
@@ -129,7 +109,7 @@ func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("Like added successfully"))
 		} else {
-			if err := h.ContentService.DeleteLike(userID, uint64(id)); err != nil {
+			if err := h.UserService.DeleteLike(userID, uint64(id)); err != nil {
 				if errors.Is(err, services.ErrLikeAlreadyExists) {
 					log.Print("Error removing like: ", err)
 					http.Error(w, "Error removing like", http.StatusBadRequest)
@@ -146,7 +126,7 @@ func (h *ContentHandler) HandleLikes(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleComments(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.URL.Path)
 	id, err := strconv.Atoi(r.URL.Path[len("/comments/"):])
 	if err != nil {
@@ -154,7 +134,7 @@ func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	_, err = h.EssayService.GetEssayByID(uint64(id))
+	_, err = h.UserService.GetEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
@@ -168,7 +148,7 @@ func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) 
 
 	switch r.Method {
 	case http.MethodGet:
-		comments, err := h.ContentService.GetComments(uint64(id))
+		comments, err := h.UserService.GetComments(uint64(id))
 		if err != nil {
 			log.Print("Error fetching comments: ", err)
 			http.Error(w, "Error fetching comments", http.StatusInternalServerError)
@@ -193,12 +173,14 @@ func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, "Invalid comment data", http.StatusBadRequest)
 			return
 		}
-		if err := h.ContentService.AddComment(userID, uint64(id), comment.CommentText); err != nil {
+		added_comment, err := h.UserService.AddComment(userID, uint64(id), comment.CommentText)
+		if err != nil {
+			log.Printf("Error adding comment: %v", err)
 			http.Error(w, "Error adding comment", http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Comment added successfully"))
+		json.NewEncoder(w).Encode(added_comment)
 
 	default:
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -206,7 +188,7 @@ func (h *ContentHandler) HandleComments(w http.ResponseWriter, r *http.Request) 
 }
 
 // GetVariant handles GET /variants/id
-func (h *ContentHandler) GetVariant(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetVariant(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -221,7 +203,7 @@ func (h *ContentHandler) GetVariant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	variant, err := h.ContentService.GetVariantByID(uint64(id))
+	variant, err := h.UserService.GetVariantByID(uint64(id))
 	if err != nil {
 		log.Print("Error getting variant: ", err)
 		http.Error(w, "Error getting variant:", http.StatusInternalServerError)
@@ -233,14 +215,14 @@ func (h *ContentHandler) GetVariant(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetCounts handles GET /counts
-func (h *ContentHandler) GetCounts(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetCounts(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	variants_count, essays_count, users_count, err := h.ContentService.GetCounts()
+	variants_count, essays_count, users_count, err := h.UserService.GetCounts()
 	if err != nil {
 		log.Print("Error getting variants count: ", err)
 		http.Error(w, "Error getting variants count", http.StatusInternalServerError)

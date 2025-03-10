@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEssayService_GetPublishedEssays(t *testing.T) {
+func TestUserService_GetPublishedEssays(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 
 	expectedEssays := []models.Essay{
 		{ID: 1, EssayText: "Essay 1", CompletedAt: time.Now(), Status: "published", IsPublished: true, UserID: 1, VariantID: 1},
@@ -36,11 +36,11 @@ func TestEssayService_GetPublishedEssays(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestEssayService_GetPublishedEssays_NoRows(t *testing.T) {
+func TestUserService_GetPublishedEssays_NoRows(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 
 	mock.ExpectQuery(`SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE is_published = true`).
 		WillReturnRows(sqlmock.NewRows(nil))
@@ -52,11 +52,11 @@ func TestEssayService_GetPublishedEssays_NoRows(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestEssayService_GetAppealEssays(t *testing.T) {
+func TestUserService_GetAppealEssays(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 
 	expectedEssays := []models.Essay{
 		{ID: 1, EssayText: "Appeal Essay 1", CompletedAt: time.Now(), Status: "appeal", IsPublished: false, UserID: 1, VariantID: 1},
@@ -75,11 +75,11 @@ func TestEssayService_GetAppealEssays(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestEssayService_GetUserEssays(t *testing.T) {
+func TestUserService_GetUserEssays(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 	userID := uint64(1)
 
 	expectedEssays := []models.Essay{
@@ -102,11 +102,11 @@ func TestEssayService_GetUserEssays(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestEssayService_GetEssayByID_Success(t *testing.T) {
+func TestUserService_GetEssayByID_Success(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 	id := uint64(1)
 
 	expectedEssay := models.Essay{
@@ -131,11 +131,11 @@ func TestEssayService_GetEssayByID_Success(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestEssayService_GetEssayByID_NoRows(t *testing.T) {
+func TestUserService_GetEssayByID_NoRows(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 	id := uint64(1)
 
 	mock.ExpectQuery(`SELECT id, essay_text, updated_at, status, is_published, user_id, variant_id FROM essay WHERE id = \$1`).
@@ -150,11 +150,11 @@ func TestEssayService_GetEssayByID_NoRows(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-// func TestEssayService_GetDetailedEssayByID_NoRows(t *testing.T) {
+// func TestUserService_GetDetailedEssayByID_NoRows(t *testing.T) {
 // 	db, mock, _ := sqlmock.New()
 // 	defer db.Close()
 
-// 	service := NewEssayService(db)
+// 	service := NewUserService(db)
 // 	essayID := uint64(1)
 
 // 	mock.ExpectQuery(`SELECT * FROM essay e JOIN "user" u ON e.user_id = u.id WHERE e.id = \$1`).
@@ -172,7 +172,7 @@ func TestEssayService_GetEssayByID_NoRows(t *testing.T) {
 // 	db, mock, _ := sqlmock.New()
 // 	defer db.Close()
 
-// 	service := NewEssayService(db)
+// 	service := NewUserService(db)
 // 	ID := uint64(1)
 
 // 	expectedComments := []models.DetailedEssayComment{
@@ -272,11 +272,11 @@ func TestEssayService_GetEssayByID_NoRows(t *testing.T) {
 // 	assert.NoError(t, mock.ExpectationsWereMet())
 // }
 
-func TestEssayService_CreateEssay(t *testing.T) {
+func TestUserService_CreateEssay(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 	newEssay := models.Essay{
 		EssayText:   "New Essay",
 		UserID:      1,
@@ -295,11 +295,11 @@ func TestEssayService_CreateEssay(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestEssayService_ChangeEssayStatus(t *testing.T) {
+func TestUserService_ChangeEssayStatus(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 	essayID := uint64(1)
 	userID := uint64(1)
 	status := "published"
@@ -314,11 +314,11 @@ func TestEssayService_ChangeEssayStatus(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestEssayService_ChangeEssayStatus_Error(t *testing.T) {
+func TestUserService_ChangeEssayStatus_Error(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 	essayID := uint64(1)
 	userID := uint64(1)
 	status := "published"
@@ -334,11 +334,11 @@ func TestEssayService_ChangeEssayStatus_Error(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestEssayService_UpdateEssay_Success(t *testing.T) {
+func TestUserService_UpdateEssay_Success(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 	updatedEssay := models.Essay{
 		ID:        1,
 		EssayText: "Updated Text",
@@ -359,11 +359,11 @@ func TestEssayService_UpdateEssay_Success(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestEssayService_UpdateEssay_WrongID(t *testing.T) {
+func TestUserService_UpdateEssay_WrongID(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 	updatedEssay := models.Essay{
 		ID:        1,
 		EssayText: "Updated Text",
@@ -380,11 +380,11 @@ func TestEssayService_UpdateEssay_WrongID(t *testing.T) {
 	assert.Equal(t, ErrWrongID, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
-func TestEssayService_PublishEssay(t *testing.T) {
+func TestUserService_PublishEssay(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 	essayID := uint64(1)
 	userID := uint64(1)
 
@@ -398,11 +398,11 @@ func TestEssayService_PublishEssay(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestEssayService_PublishEssay_Error(t *testing.T) {
+func TestUserService_PublishEssay_Error(t *testing.T) {
 	db, mock, _ := sqlmock.New()
 	defer db.Close()
 
-	service := NewEssayService(db)
+	service := NewUserService(db)
 	essayID := uint64(1)
 	userID := uint64(1)
 

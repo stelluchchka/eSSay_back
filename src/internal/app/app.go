@@ -12,36 +12,24 @@ import (
 type App struct {
 	DB *database.DB
 
-	UserService    *services.UserService
-	EssayService   *services.EssayService
-	ContentService *services.ContentService
+	UserService *services.UserService
 
-	UserHandler    *handlers.UserHandler
-	EssayHandler   *handlers.EssayHandler
-	ContentHandler *handlers.ContentHandler
+	UserHandler *handlers.UserHandler
 }
 
 func NewApp() *App {
 	db := database.GetPostgreSQLConnection()
 
 	userService := services.NewUserService(db.Instance)
-	essayService := services.NewEssayService(db.Instance)
-	contentService := services.NewContentService(db.Instance)
 
 	userHandler := handlers.NewUserHandler(userService)
-	essayHandler := handlers.NewEssayHandler(essayService)
-	contentHandler := handlers.NewContentHandler(contentService, essayService)
 
 	return &App{
 		DB: db,
 
-		UserService:    userService,
-		EssayService:   essayService,
-		ContentService: contentService,
+		UserService: userService,
 
-		UserHandler:    userHandler,
-		EssayHandler:   essayHandler,
-		ContentHandler: contentHandler,
+		UserHandler: userHandler,
 	}
 }
 
@@ -54,8 +42,6 @@ func (a *App) ServeMux() http.Handler {
 	mux := http.NewServeMux()
 
 	a.UserHandler.RegisterRoutes(mux)
-	a.EssayHandler.RegisterRoutes(mux)
-	a.ContentHandler.RegisterRoutes(mux)
 
 	return middleware.NewCORSMiddleware(config.СorsConfig)(mux)
 }

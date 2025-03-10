@@ -15,26 +15,8 @@ import (
 	"essay/src/internal/services"
 )
 
-type EssayHandler struct {
-	EssayService *services.EssayService
-}
-
-func NewEssayHandler(essayService *services.EssayService) *EssayHandler {
-	return &EssayHandler{
-		EssayService: essayService,
-	}
-}
-
-func (h *EssayHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/essays", h.HandleEssaysRequests)
-	mux.HandleFunc("/essays/", h.HandleEssayRequests)
-	mux.HandleFunc("/essays/appeal", h.GetAppealEssays)
-	mux.HandleFunc("/users/me/essays", h.GetUserEssays)
-	mux.HandleFunc("/users/me/essays/", h.GetUserEssayByID)
-}
-
 // HandleEssaysRequests handles various methods on essays.
-func (h *EssayHandler) HandleEssaysRequests(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleEssaysRequests(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		h.GetPublishedEssays(w, r)
 		return
@@ -46,7 +28,7 @@ func (h *EssayHandler) HandleEssaysRequests(w http.ResponseWriter, r *http.Reque
 }
 
 // HandleEssayRequests handles various methods on essay.
-func (h *EssayHandler) HandleEssayRequests(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) HandleEssayRequests(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		h.GetEssayByID(w, r)
 		return
@@ -73,10 +55,10 @@ func (h *EssayHandler) HandleEssayRequests(w http.ResponseWriter, r *http.Reques
 }
 
 // GetPublishedEssays handles GET /essays.
-func (h *EssayHandler) GetPublishedEssays(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetPublishedEssays(w http.ResponseWriter, r *http.Request) {
 	log.Print("GET ", r.URL.Path)
 
-	essays, err := h.EssayService.GetPublishedEssays()
+	essays, err := h.UserService.GetPublishedEssays()
 	if err != nil {
 		log.Printf("Error retrieving essays: %v", err)
 		http.Error(w, "Failed to retrieve essays", http.StatusInternalServerError)
@@ -87,7 +69,7 @@ func (h *EssayHandler) GetPublishedEssays(w http.ResponseWriter, r *http.Request
 }
 
 // GetAppealEssays handles GET /essays/appeal.
-func (h *EssayHandler) GetAppealEssays(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetAppealEssays(w http.ResponseWriter, r *http.Request) {
 	log.Print("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -101,7 +83,7 @@ func (h *EssayHandler) GetAppealEssays(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	essays, err := h.EssayService.GetAppealEssays()
+	essays, err := h.UserService.GetAppealEssays()
 	if err != nil {
 		log.Printf("Error retrieving essays: %v", err)
 		http.Error(w, "Failed to retrieve essays", http.StatusInternalServerError)
@@ -112,7 +94,7 @@ func (h *EssayHandler) GetAppealEssays(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetEssayByID handles GET /essays/:id.
-func (h *EssayHandler) GetEssayByID(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetEssayByID(w http.ResponseWriter, r *http.Request) {
 	log.Print("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -127,7 +109,7 @@ func (h *EssayHandler) GetEssayByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	essay, err := h.EssayService.GetDetailedEssayByID(uint64(id))
+	essay, err := h.UserService.GetDetailedEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, "Essay not found", http.StatusNotFound)
@@ -163,7 +145,7 @@ func (h *EssayHandler) GetEssayByID(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetUserEssays handles GET /users/me/essays.
-func (h *EssayHandler) GetUserEssays(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetUserEssays(w http.ResponseWriter, r *http.Request) {
 	log.Print("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -177,7 +159,7 @@ func (h *EssayHandler) GetUserEssays(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	essays, err := h.EssayService.GetUserEssays(userID)
+	essays, err := h.UserService.GetUserEssays(userID)
 	if err != nil {
 		log.Printf("Error retrieving user essays: %v", err)
 		http.Error(w, "Failed to retrieve user essays", http.StatusInternalServerError)
@@ -189,7 +171,7 @@ func (h *EssayHandler) GetUserEssays(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetEssayByID handles GET /users/me/essays/:id.
-func (h *EssayHandler) GetUserEssayByID(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetUserEssayByID(w http.ResponseWriter, r *http.Request) {
 	log.Print("GET ", r.URL.Path)
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -204,7 +186,7 @@ func (h *EssayHandler) GetUserEssayByID(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	essay, err := h.EssayService.GetDetailedEssayByID(uint64(id))
+	essay, err := h.UserService.GetDetailedEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, "Essay not found", http.StatusNotFound)
@@ -234,7 +216,7 @@ func (h *EssayHandler) GetUserEssayByID(w http.ResponseWriter, r *http.Request) 
 }
 
 // CreateEssay handles POST /essays.
-func (h *EssayHandler) CreateEssay(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) CreateEssay(w http.ResponseWriter, r *http.Request) {
 	log.Print("POST ", r.URL.Path)
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -266,7 +248,7 @@ func (h *EssayHandler) CreateEssay(w http.ResponseWriter, r *http.Request) {
 	essay.VariantID = reqBody.VariantId
 	essay.UserID = userID
 
-	essayId, err := h.EssayService.CreateEssay(&essay)
+	essayId, err := h.UserService.CreateEssay(&essay)
 	if err != nil {
 		log.Printf("Failed to create essay: %v", err)
 		http.Error(w, "Failed to create essay", http.StatusInternalServerError)
@@ -282,7 +264,7 @@ func (h *EssayHandler) CreateEssay(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateEssay handles PUT /essays/:id.
-func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 	log.Print("PUT ", r.URL.Path)
 
 	parts := strings.Split(r.URL.Path, "/")
@@ -301,7 +283,7 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := userIDInterface.(uint64)
 
-	essay, err := h.EssayService.GetEssayByID(uint64(id))
+	essay, err := h.UserService.GetEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
@@ -332,7 +314,7 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 	newEssay.UserID = userID
 
 	log.Printf("Updating essay with id %d, text %s", newEssay.ID, newEssay.EssayText)
-	if err := h.EssayService.UpdateEssay(&newEssay); err != nil {
+	if err := h.UserService.UpdateEssay(&newEssay); err != nil {
 		if errors.Is(err, services.ErrWrongID) {
 			http.Error(w, "Wrong id", http.StatusBadRequest)
 			return
@@ -347,7 +329,7 @@ func (h *EssayHandler) UpdateEssay(w http.ResponseWriter, r *http.Request) {
 }
 
 // ChangeEssayStatus handles PUT /essays/:id/<action>.
-func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) {
 	log.Print("PUT ", r.URL.Path)
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) != 4 {
@@ -372,7 +354,7 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 	}
 	userID := userIDInterface.(uint64)
 
-	essay, err := h.EssayService.GetEssayByID(uint64(id))
+	essay, err := h.UserService.GetEssayByID(uint64(id))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Failed to find essay with id %d: %v", id, err)
@@ -425,7 +407,7 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 		// TODO: добавить текст аппеляции
 	case "publish":
 		log.Printf("Publishing essay: ID %d", id)
-		if err := h.EssayService.PublishEssay(uint64(id), userID); err != nil {
+		if err := h.UserService.PublishEssay(uint64(id), userID); err != nil {
 			log.Printf("Failed to publish essay: %v", err)
 			http.Error(w, "Failed to publish essay", http.StatusInternalServerError)
 			return
@@ -440,7 +422,7 @@ func (h *EssayHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request)
 	}
 
 	log.Printf("Changing essay status to '%s' for essayID %d for userID %d", status, id, userID)
-	if err := h.EssayService.ChangeEssayStatus(uint64(id), userID, status); err != nil {
+	if err := h.UserService.ChangeEssayStatus(uint64(id), userID, status); err != nil {
 		log.Printf("Failed to change essay status: %v", err)
 		http.Error(w, "Failed to change essay status", http.StatusInternalServerError)
 		return
