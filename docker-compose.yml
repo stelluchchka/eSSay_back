@@ -1,4 +1,18 @@
+
 services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres_container
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "1234"
+      POSTGRES_DB: essay
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./scripts:/docker-entrypoint-initdb.d
+
   zookeeper:
     image: bitnami/zookeeper:latest
     container_name: zookeeper
@@ -15,9 +29,25 @@ services:
     ports:
       - "9092:9092"
     environment:
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+       - ALLOW_PLAINTEXT_LISTENER=yes
+       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
     depends_on:
       - zookeeper
+
+  app:
+    build: .
+    container_name: go_app
+    restart: always
+    depends_on:
+      - postgres
+    working_dir: /app
+    environment:
+      DB_HOST: postgres  # <-- Заменили localhost на postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: "1234"
+      DB_NAME: essay
+    ports:
+      - "8080:8080"
