@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"essay/src/internal/config"
+	"essay/src/internal/models"
 	"essay/src/internal/services"
 	"log"
 	"net/http"
@@ -235,4 +236,43 @@ func (h *UserHandler) GetCounts(w http.ResponseWriter, r *http.Request) {
 		"essays_count":   essays_count,
 		"users_count":    users_count,
 	})
+}
+
+// CreateResult handles POST /result/id.
+func (h *UserHandler) CreateResult(w http.ResponseWriter, r *http.Request) {
+	log.Print("POST ", r.URL.Path)
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	parts := strings.Split(r.URL.Path, "/")
+	id, err := strconv.Atoi(parts[2])
+	if err != nil {
+		log.Printf("Invalid variant ID: %v", err)
+		http.Error(w, "Invalid variant ID", http.StatusBadRequest)
+		return
+	}
+
+	var request struct {
+		LLMResponse models.DetailedResult `json:"llm_response"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		log.Printf("Invalid request body: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err = h.UserService.CreateResult(&request.LLMResponse, uint64(id))
+	if err != nil {
+		log.Printf("Failed to create result: %v", err)
+		http.Error(w, "Failed to create result", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Result created successfully: %+v", request.LLMResponse)
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(request.LLMResponse)
 }

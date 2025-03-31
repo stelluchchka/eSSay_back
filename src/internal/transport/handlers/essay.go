@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -8,9 +9,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"essay/src/internal/config"
-	"essay/src/internal/kafka"
 	"essay/src/internal/models"
 	"essay/src/internal/services"
 )
@@ -380,21 +381,41 @@ func (h *UserHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, "Failed to save essay: status should be draft", http.StatusBadRequest)
 			return
 		}
+
+		vaiant, err := h.UserService.GetVariantByID(essay.VariantID)
+		if err != nil {
+			log.Printf("Failed to get variant in ChangeEssayStatus: %v", err)
+			http.Error(w, "Failed to get variant in ChangeEssayStatus", http.StatusInternalServerError)
+			return
+		}
+		requestBody, err := json.Marshal(models.EssayRequest{
+			EssayID:        essay.ID,
+			EssayText:      essay.EssayText,
+			VariantText:    vaiant.VariantText,
+			AuthorPosition: vaiant.AuthorPosition,
+		})
+		if err != nil {
+			log.Printf("Failed to marshal JSON in ChangeEssayStatus: %v", err)
+			http.Error(w, "Failed to marshal JSON in ChangeEssayStatus", http.StatusInternalServerError)
+			return
+		}
+
+		client := &http.Client{Timeout: 60 * time.Second}
+		resp, err := client.Post(config.URL, "application/json", bytes.NewBuffer(requestBody))
+		if err != nil {
+			log.Printf("Failed to send request to Python service: %v", err)
+			http.Error(w, "Failed to send request to Python service", http.StatusInternalServerError)
+		}
+		defer resp.Body.Close()
+
+		log.Printf("Send to Python service")
+
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("Error from Python service: %s", resp.Status)
+			http.Error(w, "Error from Python service", http.StatusInternalServerError)
+		}
+
 		status = "saved"
-
-		kafkaConfig, err := config.LoadKafkaConfig()
-		if err != nil {
-			log.Printf("Failed to load Kafka config: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-
-		err = kafka.ProduceEssay(kafkaConfig.Brokers, kafkaConfig.Topic, *essay)
-		if err != nil {
-			log.Printf("Failed to enqueue essay for checking: %v", err)
-			http.Error(w, "Failed to enqueue essay for checking", http.StatusInternalServerError)
-			return
-		}
 		log.Printf("Essay ID %d enqueued for checking", id)
 
 	case "appeal":

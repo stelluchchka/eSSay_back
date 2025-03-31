@@ -29,6 +29,8 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/likes/", h.HandleLikes)
 	mux.HandleFunc("/comments/", h.HandleComments)
 	mux.HandleFunc("/variants/", h.GetVariant)
+	// result
+	mux.HandleFunc("/result/", h.CreateResult)
 
 	// essay
 	mux.HandleFunc("/essays", h.HandleEssaysRequests)

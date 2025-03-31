@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"essay/src/internal/models"
+	"log"
 )
 
 func (s *UserService) GetCounts() (int, int, int, error) {
@@ -163,4 +164,50 @@ func (s *UserService) AddComment(userID uint64, essayID uint64, text string) (mo
 	comment.AuthorNickname = authorNickname
 
 	return comment, nil
+}
+
+func (s *UserService) CreateResult(result *models.DetailedResult, essayID uint64) error {
+	var resultID int
+	err := s.DB.QueryRow(`
+		INSERT INTO result (sum_score, essay_id) 
+		VALUES ($1, $2) RETURNING id`,
+		result.Score, essayID,
+	).Scan(&resultID)
+	if err != nil {
+		return err
+	}
+	log.Println("resultID ", resultID)
+
+	// Вставляем критерии оценки
+	criteriaScores := []struct {
+		Score       int
+		Explanation string
+		CriteriaID  int
+	}{
+		{result.K1_score, result.K1_explanation, 1},
+		{result.K2_score, result.K2_explanation, 2},
+		{result.K3_score, result.K3_explanation, 3},
+		{result.K4_score, result.K4_explanation, 4},
+		{result.K5_score, result.K5_explanation, 5},
+		{result.K6_score, result.K6_explanation, 6},
+		{result.K7_score, result.K7_explanation, 7},
+		{result.K8_score, result.K8_explanation, 8},
+		{result.K9_score, result.K9_explanation, 9},
+		{result.K10_score, result.K10_explanation, 10},
+	}
+
+	for _, c := range criteriaScores {
+		_, err = s.DB.Exec(`
+			INSERT INTO result_criteria (result_id, criteria_id, score, explanation)
+			VALUES ($1, $2, $3, $4)`,
+			resultID, c.CriteriaID, c.Score, c.Explanation,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Println("Resilt saved with ID:", resultID)
+
+	return nil
 }

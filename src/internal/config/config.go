@@ -18,12 +18,7 @@ type DBConfig struct {
 	DBName     string
 }
 
-type KafkaConfig struct {
-	Brokers  string
-	Topic    string
-	ClientID string
-	Acks     string
-}
+var URL = "http://localhost:8000/process_essay"
 
 func LoadDBConfig() (*DBConfig, error) {
 	err := godotenv.Load()
@@ -36,23 +31,7 @@ func LoadDBConfig() (*DBConfig, error) {
 		DBPort:     getEnv("DB_PORT", "5432"),
 		DBUser:     getEnv("DB_USER", "postgres"),
 		DBPassword: getEnv("DB_PASSWORD", "1234"),
-		DBName:     getEnv("DB_NAME", "db"),
-	}
-
-	return config, nil
-}
-
-func LoadKafkaConfig() (*KafkaConfig, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("No .env file found or failed to load")
-	}
-
-	config := &KafkaConfig{
-		Brokers:  getEnv("KAFKA_BROKERS", "localhost:9092"),
-		Topic:    getEnv("KAFKA_TOPIC", "essay_check_queue"),
-		ClientID: getEnv("KAFKA_CLIENT_ID", "essay_producer"),
-		Acks:     getEnv("KAFKA_ACKS", "all"),
+		DBName:     getEnv("DB_NAME", "essay"),
 	}
 
 	return config, nil
