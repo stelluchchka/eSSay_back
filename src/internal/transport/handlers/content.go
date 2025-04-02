@@ -271,6 +271,13 @@ func (h *UserHandler) CreateResult(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Changing essay status to 'checked' for essayID %d", id)
+	if err := h.UserService.ChangeEssayStatus(uint64(id), "checked"); err != nil {
+		log.Printf("Failed to change essay status: %v", err)
+		http.Error(w, "Failed to change essay status", http.StatusInternalServerError)
+		return
+	}
+
 	log.Printf("Result created successfully: %+v", request.LLMResponse)
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")

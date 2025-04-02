@@ -293,9 +293,9 @@ func (s *UserService) UpdateEssay(essay *models.Essay) error {
 }
 
 // ChangeEssayStatus updates the status of an essay.
-func (s *UserService) ChangeEssayStatus(essayID uint64, userID uint64, status string) error {
-	query := `UPDATE essay SET status = $1 WHERE id = $2 AND user_id = $3`
-	_, err := s.DB.Exec(query, status, essayID, userID)
+func (s *UserService) ChangeEssayStatus(essayID uint64, status string) error {
+	query := `UPDATE essay SET status = $1 WHERE id = $2`
+	_, err := s.DB.Exec(query, status, essayID)
 	if err != nil {
 		return err
 	}

@@ -301,14 +301,13 @@ func TestUserService_ChangeEssayStatus(t *testing.T) {
 
 	service := NewUserService(db)
 	essayID := uint64(1)
-	userID := uint64(1)
 	status := "published"
 
 	mock.ExpectExec(`UPDATE essay SET status = \$1 WHERE id = \$2 AND user_id = \$3`).
-		WithArgs(status, essayID, userID).
+		WithArgs(status, essayID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err := service.ChangeEssayStatus(essayID, userID, status)
+	err := service.ChangeEssayStatus(essayID, status)
 
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
@@ -327,7 +326,7 @@ func TestUserService_ChangeEssayStatus_Error(t *testing.T) {
 		WithArgs(status, essayID, userID).
 		WillReturnError(errors.New("update failed"))
 
-	err := service.ChangeEssayStatus(essayID, userID, status)
+	err := service.ChangeEssayStatus(essayID, status)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "update failed")

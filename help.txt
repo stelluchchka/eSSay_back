@@ -8,6 +8,7 @@ go tool cover -html=coverage.out
 
 
 go run src/cmd/app/main.go
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 user1
 session=MTczNzMzNTYxM3xEWDhFQVFMX2dBQUJFQUVRQUFCQV80QUFBZ1p6ZEhKcGJtY01DUUFIZFhObGNsOXBaQVYxYVc1ME9BWUNBQUVHYzNSeWFXNW5EQTRBREdselgyMXZaR1Z5WVhSdmNnUmliMjlzQWdJQUFBPT18GGIBJfEi55z-xgsph431YpE5stfksWBowtPhSU3nWR0=; Path=/; Expires=Mon, 27 Jan 2025 01:13:33 GMT; Max-Age=604800; HttpOnly

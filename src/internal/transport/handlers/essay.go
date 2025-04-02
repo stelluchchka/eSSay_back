@@ -442,8 +442,8 @@ func (h *UserHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	log.Printf("Changing essay status to '%s' for essayID %d for userID %d", status, id, userID)
-	if err := h.UserService.ChangeEssayStatus(uint64(id), userID, status); err != nil {
+	log.Printf("Changing essay status to '%s' for essayID %d", status, id)
+	if err := h.UserService.ChangeEssayStatus(uint64(id), status); err != nil {
 		log.Printf("Failed to change essay status: %v", err)
 		http.Error(w, "Failed to change essay status", http.StatusInternalServerError)
 		return
