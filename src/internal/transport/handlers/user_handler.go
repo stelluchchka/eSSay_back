@@ -28,6 +28,7 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/likes/is_liked/", h.HandleIsLiked)
 	mux.HandleFunc("/likes/", h.HandleLikes)
 	mux.HandleFunc("/comments/", h.HandleComments)
+	mux.HandleFunc("/variants", h.CreateVariant)
 	mux.HandleFunc("/variants/", h.GetVariant)
 	// result
 	mux.HandleFunc("/result/", h.CreateResult)

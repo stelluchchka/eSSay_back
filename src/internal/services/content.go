@@ -11,7 +11,7 @@ func (s *UserService) GetCounts() (int, int, int, error) {
 	var essays_count int
 	var users_count int
 
-	variants_query := `SELECT COUNT(*) FROM variant`
+	variants_query := `SELECT COUNT(*) FROM variant WHERE is_public = TRUE`
 	err := s.DB.QueryRow(variants_query).Scan(&variants_count)
 	if err != nil {
 		return 0, 0, 0, err
@@ -43,6 +43,21 @@ func (s *UserService) GetVariantByID(variantID uint64) (models.Variant, error) {
 	}
 
 	return variant, nil
+}
+
+func (s *UserService) CreateVariant(variant models.Variant) (int, error) {
+	var insertedID int
+	query := `
+		INSERT INTO variant (variant_title, variant_text, author_position)  
+		VALUES ($1, $2, $3)  
+		RETURNING id;`
+	err := s.DB.QueryRow(query, variant.VariantTitle, variant.VariantText, variant.AuthorPosition).Scan(&insertedID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return insertedID, nil
 }
 
 func (s *UserService) GetLikesCount(essayID uint64) (int, error) {

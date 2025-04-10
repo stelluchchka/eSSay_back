@@ -215,6 +215,40 @@ func (h *UserHandler) GetVariant(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(variant)
 }
 
+func (h *UserHandler) CreateVariant(w http.ResponseWriter, r *http.Request) {
+	log.Println("POST ", r.URL.Path)
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var variant models.Variant
+
+	if err := json.NewDecoder(r.Body).Decode(&variant); err != nil {
+		log.Printf("Invalid request body: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	newVariant := models.Variant{
+		VariantTitle:   variant.VariantTitle,
+		VariantText:    variant.VariantText,
+		AuthorPosition: variant.AuthorPosition,
+	}
+
+	id, err := h.UserService.CreateVariant(newVariant)
+	if err != nil {
+		log.Print("Error creating variant: ", err)
+		http.Error(w, "Error creating variant:", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]int{
+		"id": id,
+	})
+}
+
 // GetCounts handles GET /counts
 func (h *UserHandler) GetCounts(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET ", r.URL.Path)

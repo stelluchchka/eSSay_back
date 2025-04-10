@@ -13,7 +13,8 @@ CREATE TABLE variant (
     id SERIAL PRIMARY KEY,
     variant_title TEXT,
     variant_text TEXT,
-    author_position TEXT
+    author_position TEXT,
+    is_public BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE essay (
