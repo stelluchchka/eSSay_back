@@ -33,6 +33,7 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/criteria", h.GetCriteria)
 	// result
 	mux.HandleFunc("/result/", h.CreateResult)
+	mux.HandleFunc("/result/appeal/", h.CreateAppealResult)
 
 	// essay
 	mux.HandleFunc("/essays", h.HandleEssaysRequests)

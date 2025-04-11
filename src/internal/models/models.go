@@ -105,28 +105,28 @@ type DetailedEssayComment struct {
 }
 
 type DetailedResult struct {
-	K1_score        int    `json:"K1_score"`
-	K2_score        int    `json:"K2_score"`
-	K3_score        int    `json:"K3_score"`
-	K4_score        int    `json:"K4_score"`
-	K5_score        int    `json:"K5_score"`
-	K6_score        int    `json:"K6_score"`
-	K7_score        int    `json:"K7_score"`
-	K8_score        int    `json:"K8_score"`
-	K9_score        int    `json:"K9_score"`
-	K10_score       int    `json:"K10_score"`
-	K1_explanation  string `json:"K1_explanation"`
-	K2_explanation  string `json:"K2_explanation"`
-	K3_explanation  string `json:"K3_explanation"`
-	K4_explanation  string `json:"K4_explanation"`
-	K5_explanation  string `json:"K5_explanation"`
-	K6_explanation  string `json:"K6_explanation"`
-	K7_explanation  string `json:"K7_explanation"`
-	K8_explanation  string `json:"K8_explanation"`
-	K9_explanation  string `json:"K9_explanation"`
-	K10_explanation string `json:"K10_explanation"`
-	Score           int    `json:"score"`
-	AppealText      string `json:"appealText"`
+	K1_score        int     `json:"K1_score"`
+	K2_score        int     `json:"K2_score"`
+	K3_score        int     `json:"K3_score"`
+	K4_score        int     `json:"K4_score"`
+	K5_score        int     `json:"K5_score"`
+	K6_score        int     `json:"K6_score"`
+	K7_score        int     `json:"K7_score"`
+	K8_score        int     `json:"K8_score"`
+	K9_score        int     `json:"K9_score"`
+	K10_score       int     `json:"K10_score"`
+	K1_explanation  string  `json:"K1_explanation"`
+	K2_explanation  string  `json:"K2_explanation"`
+	K3_explanation  string  `json:"K3_explanation"`
+	K4_explanation  string  `json:"K4_explanation"`
+	K5_explanation  string  `json:"K5_explanation"`
+	K6_explanation  string  `json:"K6_explanation"`
+	K7_explanation  string  `json:"K7_explanation"`
+	K8_explanation  string  `json:"K8_explanation"`
+	K9_explanation  string  `json:"K9_explanation"`
+	K10_explanation string  `json:"K10_explanation"`
+	Score           *int    `json:"score,omitempty"`
+	AppealText      *string `json:"appealText,omitempty"`
 }
 
 type UserInfo struct {

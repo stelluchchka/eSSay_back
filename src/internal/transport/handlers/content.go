@@ -318,6 +318,52 @@ func (h *UserHandler) CreateResult(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(request.LLMResponse)
 }
 
+// CreateAppealResult handles POST /result/appeal/
+func (h *UserHandler) CreateAppealResult(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract essay ID from URL
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 4 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+	essayID, err := strconv.ParseUint(parts[3], 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid essay ID", http.StatusBadRequest)
+		return
+	}
+
+	// Parse request body
+	var result models.DetailedResult
+	if err := json.NewDecoder(r.Body).Decode(&result); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Save result
+	err = h.UserService.CreateResult(&result, essayID)
+	if err != nil {
+		http.Error(w, "Failed to save result", http.StatusInternalServerError)
+		return
+	}
+
+	// Update essay status
+	err = h.UserService.ChangeEssayStatus(essayID, "appealed")
+	if err != nil {
+		http.Error(w, "Failed to update essay status", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "Appeal result saved successfully",
+	})
+}
+
 // GetCriteria handles GET /criteria
 func (h *UserHandler) GetCriteria(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET ", r.URL.Path)

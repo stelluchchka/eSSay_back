@@ -183,6 +183,13 @@ func (s *UserService) AddComment(userID uint64, essayID uint64, text string) (mo
 
 func (s *UserService) CreateResult(result *models.DetailedResult, essayID uint64) error {
 	var resultID int
+
+	if result.Score == nil {
+		score := result.K1_score + result.K2_score + result.K3_score + result.K4_score +
+			result.K5_score + result.K6_score + result.K7_score + result.K8_score +
+			result.K9_score + result.K10_score
+		result.Score = &score
+	}
 	err := s.DB.QueryRow(`
 		INSERT INTO result (sum_score, essay_id) 
 		VALUES ($1, $2) RETURNING id`,
