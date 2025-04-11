@@ -283,8 +283,8 @@ func (h *UserHandler) CreateResult(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	id, err := strconv.Atoi(parts[2])
 	if err != nil {
-		log.Printf("Invalid variant ID: %v", err)
-		http.Error(w, "Invalid variant ID", http.StatusBadRequest)
+		log.Printf("Invalid essay ID: %v", err)
+		http.Error(w, "Invalid essay ID", http.StatusBadRequest)
 		return
 	}
 
@@ -316,4 +316,23 @@ func (h *UserHandler) CreateResult(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(request.LLMResponse)
+}
+
+// GetCriteria handles GET /criteria
+func (h *UserHandler) GetCriteria(w http.ResponseWriter, r *http.Request) {
+	log.Println("GET ", r.URL.Path)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	criteria, err := h.UserService.GetCriteria()
+	if err != nil {
+		log.Print("Error getting criteria: ", err)
+		http.Error(w, "Error getting criteria:", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(criteria)
 }

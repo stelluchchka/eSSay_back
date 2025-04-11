@@ -30,6 +30,7 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/comments/", h.HandleComments)
 	mux.HandleFunc("/variants", h.CreateVariant)
 	mux.HandleFunc("/variants/", h.GetVariant)
+	mux.HandleFunc("/criteria", h.GetCriteria)
 	// result
 	mux.HandleFunc("/result/", h.CreateResult)
 

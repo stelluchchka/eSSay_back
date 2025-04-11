@@ -226,3 +226,28 @@ func (s *UserService) CreateResult(result *models.DetailedResult, essayID uint64
 
 	return nil
 }
+
+func (s *UserService) GetCriteria() ([]models.Criteria, error) {
+	var criteria []models.Criteria
+	query := `SELECT id, title, max_score FROM "criteria" ORDER BY id`
+
+	rows, err := s.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var c models.Criteria
+		if err := rows.Scan(&c.ID, &c.Title, &c.MaxScore); err != nil {
+			return nil, err
+		}
+		criteria = append(criteria, c)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return criteria, nil
+}

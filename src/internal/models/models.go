@@ -49,8 +49,9 @@ type Result struct {
 }
 
 type Criteria struct {
-	ID    uint64 `json:"id"`
-	Title string `json:"title"`
+	ID       uint64 `json:"id"`
+	Title    string `json:"title"`
+	MaxScore int    `json:"max_score"`
 }
 
 type ResultCriteria struct {
