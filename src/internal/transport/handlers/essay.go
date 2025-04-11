@@ -425,6 +425,11 @@ func (h *UserHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		status = "appeal"
+		if err := h.UserService.UnpublishEssay(uint64(id), userID); err != nil {
+			log.Printf("Failed to unpublish essay: %v", err)
+			http.Error(w, "Failed to unpublish essay", http.StatusInternalServerError)
+			return
+		}
 		// TODO: добавить текст аппеляции
 	case "publish":
 		log.Printf("Publishing essay: ID %d", id)

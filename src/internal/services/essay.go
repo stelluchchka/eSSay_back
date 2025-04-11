@@ -311,3 +311,13 @@ func (s *UserService) PublishEssay(essayID uint64, userID uint64) error {
 	}
 	return nil
 }
+
+// UnpublishEssay marks an essay as not published.
+func (s *UserService) UnpublishEssay(essayID uint64, userID uint64) error {
+	query := `UPDATE essay SET is_published = false WHERE id = $1 AND user_id = $2`
+	_, err := s.DB.Exec(query, essayID, userID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
