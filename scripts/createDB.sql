@@ -57,8 +57,8 @@ CREATE TABLE result (
 
 CREATE TABLE criteria (
     id SERIAL PRIMARY KEY,
-    title TEXT NOT NULL
-    max_score INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    max_score INTEGER NOT NULL
 );
 
 CREATE TABLE result_criteria (
