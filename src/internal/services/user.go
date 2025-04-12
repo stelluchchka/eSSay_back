@@ -134,3 +134,18 @@ func (s *UserService) Authenticate(mail, password string) (*models.User, error) 
 
 	return user, nil
 }
+
+func (s *UserService) DecreaseCheckCount(userID uint64) error {
+	var checkCount int
+	err := s.DB.QueryRow(`SELECT count_checks FROM "user" WHERE id = $1`, userID).Scan(&checkCount)
+	if err != nil {
+		return err
+	}
+
+	if checkCount <= 0 {
+		return ErrNoChecksLeft
+	}
+
+	_, err = s.DB.Exec(`UPDATE "user" SET count_checks = count_checks - 1 WHERE id = $1`, userID)
+	return err
+}

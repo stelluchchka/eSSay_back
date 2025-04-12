@@ -5,11 +5,14 @@ import (
 	"errors"
 )
 
-var ErrDuplicateEmail = errors.New("email already in use")
-var ErrInvalidCredentials = errors.New("invalid email or password")
-var ErrWrongID = errors.New("wrong id")
-var ErrLikeAlreadyExists = errors.New("like already exists")
-var ErrLikeNotFound = errors.New("like doesn't exists")
+var (
+	ErrDuplicateEmail     = errors.New("email already in use")
+	ErrInvalidCredentials = errors.New("invalid email or password")
+	ErrWrongID            = errors.New("wrong id")
+	ErrLikeAlreadyExists  = errors.New("like already exists")
+	ErrLikeNotFound       = errors.New("like doesn't exists")
+	ErrNoChecksLeft       = errors.New("no checks left")
+)
 
 type UserService struct {
 	DB *sql.DB

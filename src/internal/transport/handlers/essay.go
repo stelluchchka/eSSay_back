@@ -382,6 +382,28 @@ func (h *UserHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
+		// check count verification
+		err = h.UserService.DecreaseCheckCount(userID)
+		if err != nil {
+			if errors.Is(err, services.ErrNoChecksLeft) {
+				log.Printf("Failed to save essay with id %d: no checks left", id)
+				http.Error(w, "No checks left", http.StatusBadRequest)
+				return
+			}
+			log.Printf("Failed to decrease check count: %v", err)
+			http.Error(w, "Failed to decrease check count", http.StatusInternalServerError)
+			return
+		}
+
+		status = "saved"
+		log.Printf("Essay ID %d enqueued for checking", id)
+		log.Printf("Changing essay status to '%s' for essayID %d", status, id)
+		if err := h.UserService.ChangeEssayStatus(uint64(id), status); err != nil {
+			log.Printf("Failed to change essay status: %v", err)
+			http.Error(w, "Failed to change essay status", http.StatusInternalServerError)
+			return
+		}
+
 		vaiant, err := h.UserService.GetVariantByID(essay.VariantID)
 		if err != nil {
 			log.Printf("Failed to get variant in ChangeEssayStatus: %v", err)
@@ -414,10 +436,8 @@ func (h *UserHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) 
 			log.Printf("Error from Python service: %s", resp.Status)
 			http.Error(w, "Error from Python service", http.StatusInternalServerError)
 		}
-
-		status = "saved"
-		log.Printf("Essay ID %d enqueued for checking", id)
-
+		w.WriteHeader(http.StatusOK)
+		return
 	case "appeal":
 		if essay.Status != "checked" {
 			log.Printf("Failed to file appeal for essay with id %d: status should be checked", id)
