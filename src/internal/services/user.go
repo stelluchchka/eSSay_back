@@ -149,3 +149,23 @@ func (s *UserService) DecreaseCheckCount(userID uint64) error {
 	_, err = s.DB.Exec(`UPDATE "user" SET count_checks = count_checks - 1 WHERE id = $1`, userID)
 	return err
 }
+
+func (s *UserService) ResetAllChecks() error {
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec(`UPDATE "user" SET count_checks = 2`)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(`UPDATE check_reset SET last_reset = NOW() WHERE id = 1`)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
