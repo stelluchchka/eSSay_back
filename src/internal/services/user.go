@@ -162,10 +162,5 @@ func (s *UserService) ResetAllChecks() error {
 		return err
 	}
 
-	_, err = tx.Exec(`UPDATE check_reset SET last_reset = NOW() WHERE id = 1`)
-	if err != nil {
-		return err
-	}
-
 	return tx.Commit()
 }
