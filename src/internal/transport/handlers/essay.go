@@ -377,7 +377,7 @@ func (h *UserHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) 
 	switch action {
 	case "save":
 		if essay.Status != "draft" {
-			log.Printf("Failed to save essay with id %d: status should be draft", id)
+			log.Printf("Failed to save essay with id %d: status should be draft but it is %s", id, essay.Status)
 			http.Error(w, "Failed to save essay: status should be draft", http.StatusBadRequest)
 			return
 		}
@@ -440,17 +440,31 @@ func (h *UserHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) 
 		return
 	case "appeal":
 		if essay.Status != "checked" {
-			log.Printf("Failed to file appeal for essay with id %d: status should be checked", id)
+			log.Printf("Failed to file appeal for essay with id %d: status should be checked but it is %s", id, essay.Status)
 			http.Error(w, "Failed to file appeal for essay: status should be checked", http.StatusBadRequest)
 			return
 		}
 		status = "appeal"
+
+		var reqBody struct {
+			AppealText string `json:"appeal_text"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+			log.Printf("Invalid request body for appeal: %v", err)
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
 		if err := h.UserService.UnpublishEssay(uint64(id), userID); err != nil {
 			log.Printf("Failed to unpublish essay: %v", err)
 			http.Error(w, "Failed to unpublish essay", http.StatusInternalServerError)
 			return
 		}
-		// TODO: добавить текст аппеляции
+		if err := h.UserService.SetAppealText(uint64(id), reqBody.AppealText); err != nil {
+			log.Printf("Failed to set appeal text: %v", err)
+			http.Error(w, "Failed to set appeal text", http.StatusInternalServerError)
+			return
+		}
 	case "publish":
 		log.Printf("Publishing essay: ID %d", id)
 		if err := h.UserService.PublishEssay(uint64(id), userID); err != nil {
