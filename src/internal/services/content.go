@@ -264,3 +264,33 @@ func (s *UserService) SetAppealText(essayID uint64, appealText string) error {
 	_, err := s.DB.Exec(query, appealText, essayID)
 	return err
 }
+
+func (s *UserService) GetResultsByUserID(userID uint64) ([]models.ResultDate, error) {
+	query := `
+        SELECT e.completed_at, r.sum_score
+        FROM result r
+        JOIN essay e ON r.essay_id = e.id
+        WHERE e.user_id = $1
+        ORDER BY e.completed_at DESC
+    `
+	rows, err := s.DB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []models.ResultDate
+	for rows.Next() {
+		var res models.ResultDate
+		if err := rows.Scan(&res.CompletedAt, &res.Score); err != nil {
+			return nil, err
+		}
+		results = append(results, res)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}

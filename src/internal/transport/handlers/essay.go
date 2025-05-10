@@ -387,7 +387,7 @@ func (h *UserHandler) ChangeEssayStatus(w http.ResponseWriter, r *http.Request) 
 		if err != nil {
 			if errors.Is(err, services.ErrNoChecksLeft) {
 				log.Printf("Failed to save essay with id %d: no checks left", id)
-				http.Error(w, "No checks left", http.StatusBadRequest)
+				http.Error(w, "No checks left", http.StatusNotFound)
 				return
 			}
 			log.Printf("Failed to decrease check count: %v", err)

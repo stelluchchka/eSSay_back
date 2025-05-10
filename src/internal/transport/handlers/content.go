@@ -382,3 +382,29 @@ func (h *UserHandler) GetCriteria(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(criteria)
 }
+
+// GetUserResults handles GET /users/me/results
+func (h *UserHandler) GetUserResults(w http.ResponseWriter, r *http.Request) {
+	log.Println("GET ", r.URL.Path)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	session, _ := config.SessionStore.Get(r, "session")
+	userID, ok := session.Values["user_id"].(uint64)
+	if !ok {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	results, err := h.UserService.GetResultsByUserID(userID)
+	if err != nil {
+		log.Printf("Error getting user results: %v", err)
+		http.Error(w, "Error getting user results", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}

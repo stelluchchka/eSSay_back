@@ -146,3 +146,8 @@ type EssayRequest struct {
 	VariantText    string `json:"variant_text"`
 	AuthorPosition string `json:"author_position"`
 }
+
+type ResultDate struct {
+	CompletedAt time.Time `json:"completed_at"`
+	Score       int       `json:"score"`
+}
