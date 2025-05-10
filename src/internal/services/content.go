@@ -258,3 +258,9 @@ func (s *UserService) GetCriteria() ([]models.Criteria, error) {
 
 	return criteria, nil
 }
+
+func (s *UserService) SetAppealText(essayID uint64, appealText string) error {
+	query := `UPDATE result SET appeal_text = $1 WHERE essay_id = $2`
+	_, err := s.DB.Exec(query, appealText, essayID)
+	return err
+}
