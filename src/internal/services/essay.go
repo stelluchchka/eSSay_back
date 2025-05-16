@@ -31,10 +31,16 @@ func (s *UserService) GetPublishedEssays() ([]models.EssayCard, error) {
 		JOIN variant v ON e.variant_id = v.id
 		JOIN "user" u ON e.user_id = u.id
 		LEFT JOIN "like" l ON e.id = l.essay_id
-		LEFT JOIN result r ON e.id = r.essay_id
+		LEFT JOIN LATERAL (
+			SELECT sum_score
+			FROM result
+			WHERE essay_id = e.id
+			ORDER BY id DESC
+			LIMIT 1
+		) r ON true
 		WHERE e.is_published = true
 		GROUP BY e.id, e.variant_id, v.variant_title, u.nickname, r.sum_score
-    `
+		`
 	rows, err := s.DB.Query(query)
 	if err != nil {
 		return nil, err
@@ -57,24 +63,46 @@ func (s *UserService) GetPublishedEssays() ([]models.EssayCard, error) {
 }
 
 // GetPublishedEssays retrieves all appeal essays.
-func (s *UserService) GetAppealEssays() ([]models.Essay, error) {
-	query := `SELECT id, essay_text, completed_at, status, is_published, user_id, variant_id FROM essay WHERE status = 'appeal'`
+func (s *UserService) GetAppealEssays() ([]models.EssayCard, error) {
+	query := `
+		SELECT 
+			e.id, e.variant_id, v.variant_title, u.nickname AS author_nickname, 
+			COALESCE(COUNT(l.user_id), 0) AS likes, 
+			COALESCE(r.sum_score, 0) AS score,
+			e.status
+		FROM essay e
+		JOIN variant v ON e.variant_id = v.id
+		JOIN "user" u ON e.user_id = u.id
+		LEFT JOIN "like" l ON e.id = l.essay_id
+		LEFT JOIN LATERAL (
+			SELECT sum_score
+			FROM result
+			WHERE essay_id = e.id
+			ORDER BY id DESC
+			LIMIT 1
+		) r ON true
+		WHERE status = 'appeal'
+		GROUP BY e.id, e.variant_id, v.variant_title, u.nickname, r.sum_score
+    `
 	rows, err := s.DB.Query(query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	essays := []models.Essay{}
+	essayCards := []models.EssayCard{}
 	for rows.Next() {
-		var essay models.Essay
-		if err := rows.Scan(&essay.ID, &essay.EssayText, &essay.CompletedAt, &essay.Status, &essay.IsPublished, &essay.UserID, &essay.VariantID); err != nil {
+		var essayCard models.EssayCard
+		if err := rows.Scan(
+			&essayCard.ID, &essayCard.VariantID, &essayCard.VariantTitle, &essayCard.AuthorNickname,
+			&essayCard.Likes, &essayCard.Score, &essayCard.Status,
+		); err != nil {
 			return nil, err
 		}
-		essays = append(essays, essay)
+		essayCards = append(essayCards, essayCard)
 	}
 
-	return essays, nil
+	return essayCards, nil
 }
 
 // GetEssayByID retrieves an essay by its ID.
@@ -234,7 +262,13 @@ func (s *UserService) GetUserEssays(userID uint64) ([]models.EssayCard, error) {
 		JOIN variant v ON e.variant_id = v.id
 		JOIN "user" u ON e.user_id = u.id
 		LEFT JOIN "like" l ON e.id = l.essay_id
-		LEFT JOIN result r ON e.id = r.essay_id
+		LEFT JOIN LATERAL (
+			SELECT sum_score
+			FROM result
+			WHERE essay_id = e.id
+			ORDER BY id DESC
+			LIMIT 1
+		) r ON true
 		WHERE e.user_id = $1
 		GROUP BY e.id, e.variant_id, v.variant_title, u.nickname, r.sum_score
     `
