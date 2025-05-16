@@ -292,6 +292,8 @@ func (h *UserHandler) CreateResult(w http.ResponseWriter, r *http.Request) {
 		LLMResponse models.DetailedResult `json:"llm_response"`
 	}
 
+	log.Print("LLMResponse: ", request.LLMResponse)
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		log.Printf("Invalid request body: %v", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)

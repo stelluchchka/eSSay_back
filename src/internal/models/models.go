@@ -126,7 +126,7 @@ type DetailedResult struct {
 	K9_explanation  string  `json:"K9_explanation"`
 	K10_explanation string  `json:"K10_explanation"`
 	Score           *int    `json:"score,omitempty"`
-	AppealText      *string `json:"appealText,omitempty"`
+	AppealText      *string `json:"appeal_text,omitempty"`
 }
 
 type UserInfo struct {
