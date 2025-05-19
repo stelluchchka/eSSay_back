@@ -192,7 +192,8 @@ func (s *UserService) GetDetailedEssayByID(id uint64) (*models.DetailedEssay, er
 		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 7 THEN rc.explanation ELSE NULL END, ', '), '') AS K7_explanation,
 		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 8 THEN rc.explanation ELSE NULL END, ', '), '') AS K8_explanation,
 		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 9 THEN rc.explanation ELSE NULL END, ', '), '') AS K9_explanation,
-		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 10 THEN rc.explanation ELSE NULL END, ', '), '') AS K10_explanation
+		COALESCE(STRING_AGG(CASE WHEN rc.criteria_id = 10 THEN rc.explanation ELSE NULL END, ', '), '') AS K10_explanation,
+		r.appeal_text
 	FROM 
 		result r
 	LEFT JOIN 
@@ -234,6 +235,7 @@ func (s *UserService) GetDetailedEssayByID(id uint64) (*models.DetailedEssay, er
 			&result.K8_explanation,
 			&result.K9_explanation,
 			&result.K10_explanation,
+			&result.AppealText,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning results: %w", err)
