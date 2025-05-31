@@ -16,16 +16,23 @@ func hashPassword(password string) string {
 func (s *UserService) GetUserInfoByID(id uint64) (*models.UserInfo, error) {
 	user := &models.UserInfo{}
 
-	query := `SELECT 
-	u.id, u.mail, u.nickname, u.is_moderator, u.count_checks,
-	COUNT(e.id) AS count_essays, 
-	COUNT(CASE WHEN e.is_published THEN 1 END) AS count_published_essays,
-	COALESCE(AVG(r.sum_score), 0) AS average_result
+	query := `
+	WITH latest_results AS (
+		SELECT DISTINCT ON (r.essay_id) r.*
+		FROM result r
+		ORDER BY r.essay_id, r.id DESC
+	)
+	SELECT 
+		u.id, u.mail, u.nickname, u.is_moderator, u.count_checks,
+		COUNT(e.id) AS count_essays, 
+		COUNT(CASE WHEN e.is_published THEN 1 END) AS count_published_essays,
+		COALESCE(AVG(lr.sum_score), 0) AS average_result
 	FROM "user" u
 	LEFT JOIN essay e ON u.id = e.user_id
-	LEFT JOIN result r ON e.id = r.essay_id
+	LEFT JOIN latest_results lr ON e.id = lr.essay_id
 	WHERE u.id = $1
-	GROUP BY u.id, u.mail, u.nickname, u.is_moderator, u.count_checks`
+	GROUP BY u.id, u.mail, u.nickname, u.is_moderator, u.count_checks
+	`
 
 	err := s.DB.QueryRow(query, id).Scan(
 		&user.ID, &user.Mail, &user.Nickname, &user.IsModerator,

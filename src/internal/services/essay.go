@@ -40,6 +40,7 @@ func (s *UserService) GetPublishedEssays() ([]models.EssayCard, error) {
 		) r ON true
 		WHERE e.is_published = true
 		GROUP BY e.id, e.variant_id, v.variant_title, u.nickname, r.sum_score
+		ORDER BY e.completed_at ASC
 		`
 	rows, err := s.DB.Query(query)
 	if err != nil {
@@ -83,6 +84,7 @@ func (s *UserService) GetAppealEssays() ([]models.EssayCard, error) {
 		) r ON true
 		WHERE status = 'appeal'
 		GROUP BY e.id, e.variant_id, v.variant_title, u.nickname, r.sum_score
+		ORDER BY e.completed_at ASC
     `
 	rows, err := s.DB.Query(query)
 	if err != nil {
@@ -273,6 +275,7 @@ func (s *UserService) GetUserEssays(userID uint64) ([]models.EssayCard, error) {
 		) r ON true
 		WHERE e.user_id = $1
 		GROUP BY e.id, e.variant_id, v.variant_title, u.nickname, r.sum_score
+		ORDER BY e.completed_at ASC
     `
 	rows, err := s.DB.Query(query, userID)
 	if err != nil {

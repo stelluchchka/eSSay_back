@@ -266,12 +266,16 @@ func (s *UserService) SetAppealText(essayID uint64, appealText string) error {
 
 func (s *UserService) GetResultsByUserID(userID uint64) ([]models.ResultDate, error) {
 	query := `
-        SELECT e.completed_at, r.sum_score
-        FROM result r
-        JOIN essay e ON r.essay_id = e.id
-        WHERE e.user_id = $1
-        ORDER BY e.completed_at DESC
-    `
+		SELECT e.completed_at, lr.sum_score
+		FROM (
+			SELECT DISTINCT ON (r.essay_id) r.*
+			FROM result r
+			ORDER BY r.essay_id, r.id DESC
+		) lr
+		JOIN essay e ON lr.essay_id = e.id
+		WHERE e.user_id = $1
+		ORDER BY e.completed_at ASC
+	`
 	rows, err := s.DB.Query(query, userID)
 	if err != nil {
 		return nil, err
